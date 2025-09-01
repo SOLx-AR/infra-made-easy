@@ -33,7 +33,7 @@ server-f0x17 ansible_host=34.122.207.0 server_name=prometheus-grafana-99 ansible
 
 # SERVIDORES INDIVIDUALES ESTUDIANTES
 [student_servers]
-#server-f0x17 ansible_host=34.122.207.0 student_name=f0x17 ansible_user=fox
+server-fede-33 ansible_host=3.19.60.235 student_name=Fede-33 ansible_user=ubuntu
 
 # Cada estudiante puede agregar su servidor individual aqui:
 # juan-server ansible_host=1.2.3.4 student_name=juan
@@ -76,7 +76,7 @@ students
 # Variables globales para todos los servidores
 [common:vars]
 ansible_user=ubuntu
-ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_ssh_private_key_file=~/.ssh/Infra_Made_Easy_keypair.pem
 ansible_python_interpreter=/usr/bin/python3
 ansible_ssh_common_args=-o StrictHostKeyChecking=no
 
