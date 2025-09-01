@@ -11,6 +11,15 @@ admin_users:
     authorized_keys:
       - name: nico
         key: "{{ lookup('file', 'users/nico/id_rsa.pub') }}"
+
+  - user: Fede-33
+    email: pereyra.federico@ymail.com
+    groups:
+      - sudo
+      - adm
+    authorized_keys:
+      - name: Fede-33
+        key: "{{ lookup('file', 'users/Fede-33/id_rsa.pub') }}"
         
 
 # Usuarios adicionales por servidor/equipo (se pueden agregar dinámicamente)
