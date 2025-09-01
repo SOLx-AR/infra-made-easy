@@ -1,0 +1,41 @@
+[Unit]
+Description=GitHub Actions Runner ({{ runner_service_name }})
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User={{ github_runner_user }}
+Group={{ github_runner_group }}
+WorkingDirectory={{ github_runner_directory }}
+ExecStart={{ github_runner_directory }}/{{ runner_service_name }}/start.sh
+ExecStop={{ github_runner_directory }}/{{ runner_service_name }}/stop.sh
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillMode=process
+Environment=RUNNER_ALLOW_RUNASROOT=0
+Environment=DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=github-runner-{{ runner_service_name }}
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths={{ github_runner_directory }}
+ReadWritePaths=/var/log/github-runner
+ReadWritePaths=/tmp
+ReadWritePaths=/var/tmp
+
+# Resource limits
+LimitNOFILE=1048576
+LimitNPROC=1048576
+TasksMax=1048576
+
+[Install]
+WantedBy=multi-user.target

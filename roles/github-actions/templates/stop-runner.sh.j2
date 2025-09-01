@@ -1,0 +1,42 @@
+#!/bin/bash
+# Script de parada para GitHub Actions Runner: {{ runner_service_name }}
+
+set -e
+
+# Configurar logging
+LOG_DIR="/var/log/github-runner/{{ runner_service_name }}"
+LOG_FILE="${LOG_DIR}/runner.log"
+
+# Función de logging
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "${LOG_FILE}"
+}
+
+# Cambiar al directorio del runner
+cd "{{ github_runner_directory }}/{{ runner_service_name }}"
+
+log "Deteniendo GitHub Actions Runner: {{ runner_service_name }}"
+
+# Buscar PID del runner
+RUNNER_PID=$(pgrep -f "{{ github_runner_directory }}/run.sh" || true)
+
+if [ -n "$RUNNER_PID" ]; then
+    log "Enviando señal SIGTERM al proceso $RUNNER_PID"
+    kill -TERM "$RUNNER_PID"
+    
+    # Esperar hasta 25 segundos para que termine gracefully
+    for i in {1..25}; do
+        if ! kill -0 "$RUNNER_PID" 2>/dev/null; then
+            log "Runner detenido exitosamente"
+            exit 0
+        fi
+        sleep 1
+    done
+    
+    log "WARNING: Runner no terminó después de 25 segundos, forzando cierre"
+    kill -KILL "$RUNNER_PID" 2>/dev/null || true
+else
+    log "No se encontró proceso del runner ejecutándose"
+fi
+
+log "Runner detenido"

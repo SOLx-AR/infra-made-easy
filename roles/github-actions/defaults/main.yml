@@ -1,0 +1,60 @@
+# Configuración por defecto para GitHub Actions Runner
+---
+
+# Versión del runner
+github_runner_version: "{{ github_actions_config.runner_version | default('2.311.0') }}"
+
+# Directorio de instalación
+github_runner_directory: "{{ github_actions_config.runner_directory | default('/opt/actions-runner') }}"
+
+# Usuario y grupo del runner
+github_runner_user: "{{ github_actions_config.runner_user | default('github-runner') }}"
+github_runner_group: "{{ github_actions_config.runner_group | default('github-runner') }}"
+
+# Configuración del runner
+github_runner_max_instances: "{{ github_actions_config.max_runners | default(3) }}"
+github_runner_labels: "{{ github_actions_config.labels | default(['infra-made-easy', 'self-hosted', 'linux', 'x64']) }}"
+github_runner_name_prefix: "{{ github_actions_config.runner_name_prefix | default('ime-runner') }}"
+
+# URL del repositorio/organización (debe configurarse como variable)
+github_runner_repo_url: "{{ github_repo_url | default('') }}"
+
+# Token de acceso (debe configurarse como variable secreta)
+github_runner_token: "{{ github_token | default('') }}"
+
+# Configuración de dependencias
+github_runner_dependencies:
+  - curl
+  - jq
+  - tar
+  - gzip
+  - git
+  - build-essential
+  - libssl-dev
+  - libffi-dev
+  - python3-dev
+  - python3-pip
+
+# Configuración de servicio systemd
+github_runner_service_enabled: true
+github_runner_service_state: started
+
+# Configuración de Docker
+github_runner_docker_enabled: true
+github_runner_docker_socket_permissions: true
+
+# Configuración de seguridad
+github_runner_home_permissions: "0755"
+github_runner_service_permissions: "0644"
+
+# Configuración de logs
+github_runner_log_level: "info"
+github_runner_log_file: "/var/log/github-runner.log"
+
+# Configuración de recursos
+github_runner_work_directory: "_work"
+github_runner_max_concurrent_jobs: 1
+
+# Clean up
+github_runner_cleanup_enabled: true
+github_runner_cleanup_retention_days: 7

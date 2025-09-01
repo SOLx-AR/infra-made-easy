@@ -1,0 +1,24 @@
+/var/log/github-runner/*/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 {{ github_runner_user }} {{ github_runner_group }}
+    sharedscripts
+    postrotate
+        # Reiniciar servicios de runners si es necesario
+        systemctl reload-or-restart github-runner-* 2>/dev/null || true
+    endscript
+}
+
+/var/log/github-runner-cleanup.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
