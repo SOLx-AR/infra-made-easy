@@ -54,22 +54,29 @@ graph TB
 
 ## 🔥 Inicio Súper Rápido
 
-### **¡Solo 4 comandos para empezar!**
+### **¡Solo 5 pasos para empezar!**
 
 ```bash
-# 1️⃣ Configurar entorno
+# 1️⃣ Clonar repositorio
 git clone https://github.com/SOLx-AR/infra-made-easy.git
-cd infra-made-easy && ./activate-env.sh
+cd infra-made-easy
 
-# 2️⃣ Verificar que todo funciona
+# 2️⃣ Configurar entorno Python
+python3 -m venv venv-ansible
+source venv-ansible/bin/activate
+
+# 3️⃣ Instalar dependencias
+pip install -r requirements.txt
+ansible-galaxy install -r requirements.yml
+
+# 4️⃣ Verificar setup
 ./verify-setup.sh
 
-# 3️⃣ ETAPA 1: Tu primer servidor (individual)
+# 5️⃣ ¡Comenzar con tu primer servidor!
 ansible-playbook etapa1-webserver-basico.yml
 
-# 4️⃣ ETAPA 2: Únete a un equipo (ej: monitoring)
-ansible-playbook setup-monitoring.yml
-./verify-monitoring.sh  # ¡Verificar que funciona!
+# 🚀 MÉTODO ALTERNATIVO SÚPER RÁPIDO:
+./activate-env.sh && ./verify-setup.sh
 ```
 
 ---
@@ -257,17 +264,38 @@ Cada equipo tiene scripts dedicados para verificar que todo funcione:
 - Credenciales configuradas: `aws configure`
 - Permisos para EC2, Security Groups, etc.
 
-### **🚀 Setup Automático**
+### **📄 Archivos de Configuración Clave**
+- **`requirements.txt`**: Dependencias Python (Ansible, Docker, etc.)
+- **`requirements.yml`**: Colecciones Ansible necesarias
+- **`ansible.cfg`**: Configuración optimizada de Ansible
+- **`inventory/hosts`**: Inventario de servidores por equipos
+- **`activate-env.sh`**: Script de setup automático
+
+### **🚀 Setup Completo**
 ```bash
-# Todo se configura automáticamente con:
+# 1. Clonar repositorio
 git clone https://github.com/SOLx-AR/infra-made-easy.git
 cd infra-made-easy
 
-# Activar entorno y instalar dependencias
-./activate-env.sh
+# 2. Crear entorno virtual Python (IMPORTANTE)
+python3 -m venv venv-ansible
+source venv-ansible/bin/activate  # En Windows: venv-ansible\Scripts\activate
 
-# Verificar que todo esté listo
+# 3. Instalar dependencias Python
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Instalar colecciones Ansible
+ansible-galaxy install -r requirements.yml
+
+# 5. Configurar AWS CLI (debe estar previamente configurado)
+aws sts get-caller-identity
+
+# 6. Verificar que todo esté listo
 ./verify-setup.sh
+
+# 🚀 MÉTODO RÁPIDO: Script automático
+./activate-env.sh  # Hace los pasos 2-4 automáticamente
 ```
 
 ---
