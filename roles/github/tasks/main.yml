@@ -1,0 +1,36 @@
+---
+# Tasks to install and configure GitHub Actions runner
+- name: Ensure runner user exists
+  ansible.builtin.user:
+    name: "{{ github_runner_user }}"
+    state: present
+    shell: /bin/bash
+
+- name: Download GitHub Actions runner
+  ansible.builtin.get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+    dest: "{{ github_runner_workdir }}/actions-runner.tar.gz"
+    owner: "{{ github_runner_user }}"
+    mode: '0644'
+
+- name: Extract runner
+  ansible.builtin.unarchive:
+    src: "{{ github_runner_workdir }}/actions-runner.tar.gz"
+    dest: "{{ github_runner_workdir }}"
+    remote_src: yes
+    owner: "{{ github_runner_user }}"
+
+- name: Configure runner
+  ansible.builtin.command:
+    cmd: "./config.sh --url https://github.com/{{ github_repo }} --token {{ github_token }} --labels {{ github_runner_labels | join(',') }} --unattended"
+    chdir: "{{ github_runner_workdir }}"
+    creates: "{{ github_runner_workdir }}/.runner"
+  become: true
+  become_user: "{{ github_runner_user }}"
+
+- name: Start runner service
+  ansible.builtin.command:
+    cmd: "./svc.sh install"
+    chdir: "{{ github_runner_workdir }}"
+  become: true
+  become_user: "root"
