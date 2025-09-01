@@ -1,6 +1,6 @@
 ---
-# EQUIPO CI/CD - Jenkins y automatización (Ultra Modular)
-- name: "ETAPA 2 - Configurar Pipeline CI/CD"
+# EQUIPO CI/CD - GitHub Actions y automatización (Ultra Modular)
+- name: "ETAPA 2 - Configurar Pipeline CI/CD con GitHub Actions"
   hosts: cicd_servers
   become: yes
   
@@ -10,8 +10,16 @@
         update_cache: yes
         upgrade: yes
         
+    - name: "Verificar variables requeridas para GitHub Actions"
+      fail:
+        msg: "{{ item }} debe estar configurado"
+      when: vars[item] is not defined or vars[item] == ""
+      loop:
+        - github_repo_url
+        - github_token
+        
   roles:
-    - common         # Configuración base + usuarios
-    - docker         # Docker para CI/CD
-    - jenkins        # Automatización y pipelines
-    - node-exporter  # Métricas para monitoreo
+    - common          # Configuración base + usuarios
+    - docker          # Docker para CI/CD
+    - github-actions  # GitHub Actions runners
+    - node-exporter   # Métricas para monitoreo

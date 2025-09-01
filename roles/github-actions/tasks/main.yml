@@ -1,0 +1,157 @@
+# Tareas para instalar y configurar GitHub Actions Runner
+---
+
+- name: "Verificar que el token de GitHub está configurado"
+  fail:
+    msg: "github_token debe estar configurado para registrar el runner"
+  when: github_runner_token == ""
+
+- name: "Verificar que la URL del repositorio está configurada"
+  fail:
+    msg: "github_repo_url debe estar configurada"
+  when: github_runner_repo_url == ""
+
+- name: "Instalar dependencias del sistema"
+  apt:
+    name: "{{ github_runner_dependencies }}"
+    state: present
+    update_cache: yes
+  tags: [github-actions, dependencies]
+
+- name: "Crear grupo para GitHub Actions Runner"
+  group:
+    name: "{{ github_runner_group }}"
+    state: present
+  tags: [github-actions, user]
+
+- name: "Crear usuario para GitHub Actions Runner"
+  user:
+    name: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    home: "{{ github_runner_directory }}"
+    create_home: yes
+    shell: /bin/bash
+    system: yes
+  tags: [github-actions, user]
+
+- name: "Configurar permisos del directorio home"
+  file:
+    path: "{{ github_runner_directory }}"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "{{ github_runner_home_permissions }}"
+    state: directory
+  tags: [github-actions, permissions]
+
+- name: "Añadir usuario del runner al grupo docker"
+  user:
+    name: "{{ github_runner_user }}"
+    groups: docker
+    append: yes
+  when: github_runner_docker_enabled
+  tags: [github-actions, docker]
+
+- name: "Crear directorio temporal para descarga"
+  tempfile:
+    state: directory
+    suffix: ".github-runner"
+  register: github_runner_temp_dir
+  tags: [github-actions, download]
+
+- name: "Detectar arquitectura del sistema"
+  set_fact:
+    github_runner_arch: "{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else 'unknown' }}"
+  tags: [github-actions, download]
+
+- name: "Fallar si la arquitectura no es soportada"
+  fail:
+    msg: "Arquitectura {{ ansible_architecture }} no soportada"
+  when: github_runner_arch == "unknown"
+  tags: [github-actions, download]
+
+- name: "Descargar GitHub Actions Runner"
+  get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-{{ github_runner_arch }}-{{ github_runner_version }}.tar.gz"
+    dest: "{{ github_runner_temp_dir.path }}/actions-runner.tar.gz"
+    mode: "0644"
+  tags: [github-actions, download]
+
+- name: "Extraer GitHub Actions Runner"
+  unarchive:
+    src: "{{ github_runner_temp_dir.path }}/actions-runner.tar.gz"
+    dest: "{{ github_runner_directory }}"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    remote_src: yes
+    creates: "{{ github_runner_directory }}/run.sh"
+  tags: [github-actions, extract]
+
+- name: "Limpiar archivos temporales"
+  file:
+    path: "{{ github_runner_temp_dir.path }}"
+    state: absent
+  tags: [github-actions, cleanup]
+
+- name: "Instalar dependencias del runner"
+  command: "{{ github_runner_directory }}/bin/installdependencies.sh"
+  become: yes
+  args:
+    creates: "{{ github_runner_directory }}/.dependencies_installed"
+  notify: "Mark dependencies installed"
+  tags: [github-actions, dependencies]
+
+- name: "Generar token de registro del runner"
+  uri:
+    url: "{{ github_runner_repo_url }}/actions/runners/registration-token"
+    method: POST
+    headers:
+      Authorization: "token {{ github_runner_token }}"
+      Accept: "application/vnd.github.v3+json"
+    status_code: 201
+  register: github_runner_registration_token
+  tags: [github-actions, register]
+
+- name: "Configurar múltiples instancias del runner"
+  include_tasks: configure_runner.yml
+  vars:
+    runner_instance: "{{ item }}"
+    runner_name: "{{ github_runner_name_prefix }}-{{ inventory_hostname }}-{{ item }}"
+  loop: "{{ range(1, github_runner_max_instances + 1) | list }}"
+  tags: [github-actions, configure]
+
+- name: "Crear script de limpieza"
+  template:
+    src: cleanup-runners.sh.j2
+    dest: /usr/local/bin/cleanup-github-runners.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when: github_runner_cleanup_enabled
+  tags: [github-actions, cleanup]
+
+- name: "Configurar cron para limpieza automática"
+  cron:
+    name: "GitHub Actions Runner Cleanup"
+    job: "/usr/local/bin/cleanup-github-runners.sh"
+    hour: "2"
+    minute: "0"
+    user: root
+  when: github_runner_cleanup_enabled
+  tags: [github-actions, cleanup, cron]
+
+- name: "Configurar logrotate para logs del runner"
+  template:
+    src: github-runner-logrotate.j2
+    dest: /etc/logrotate.d/github-runner
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [github-actions, logging]
+
+- name: "Verificar estado de los servicios del runner"
+  systemd:
+    name: "github-runner-{{ github_runner_name_prefix }}-{{ inventory_hostname }}-{{ item }}"
+    enabled: "{{ github_runner_service_enabled }}"
+    state: "{{ github_runner_service_state }}"
+  loop: "{{ range(1, github_runner_max_instances + 1) | list }}"
+  tags: [github-actions, service]

@@ -1,0 +1,44 @@
+#!/bin/bash
+# Script de inicio para GitHub Actions Runner: {{ runner_service_name }}
+
+set -e
+
+# Configurar variables de entorno
+export RUNNER_ALLOW_RUNASROOT=0
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+export RUNNER_ROOT="{{ github_runner_directory }}"
+export RUNNER_WORK_DIRECTORY="{{ github_runner_work_directory }}"
+
+# Configurar logging
+LOG_DIR="/var/log/github-runner/{{ runner_service_name }}"
+LOG_FILE="${LOG_DIR}/runner.log"
+
+# Crear directorio de logs si no existe
+mkdir -p "${LOG_DIR}"
+
+# Función de logging
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "${LOG_FILE}"
+}
+
+# Cambiar al directorio del runner
+cd "{{ github_runner_directory }}/{{ runner_service_name }}"
+
+log "Iniciando GitHub Actions Runner: {{ runner_service_name }}"
+log "Directorio de trabajo: $(pwd)"
+log "Usuario: $(whoami)"
+
+# Verificar que el runner está configurado
+if [ ! -f ".runner" ]; then
+    log "ERROR: Runner no está configurado. Ejecutar config.sh primero."
+    exit 1
+fi
+
+# Verificar conectividad
+if ! curl -s --max-time 10 "{{ github_runner_repo_url }}" > /dev/null; then
+    log "WARNING: No se puede conectar a {{ github_runner_repo_url }}"
+fi
+
+# Iniciar el runner
+log "Ejecutando runner..."
+exec {{ github_runner_directory }}/run.sh 2>&1 | tee -a "${LOG_FILE}"

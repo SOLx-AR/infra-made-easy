@@ -1,0 +1,72 @@
+# Tareas para configurar una instancia individual del runner
+---
+
+- name: "Crear directorio de trabajo para runner {{ runner_name }}"
+  file:
+    path: "{{ github_runner_directory }}/{{ runner_name }}"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "0755"
+    state: directory
+
+- name: "Verificar si el runner {{ runner_name }} ya está configurado"
+  stat:
+    path: "{{ github_runner_directory }}/{{ runner_name }}/.runner"
+  register: runner_config_check
+
+- name: "Configurar runner {{ runner_name }}"
+  command: >
+    ./config.sh
+    --url {{ github_runner_repo_url }}
+    --token {{ github_runner_registration_token.json.token }}
+    --name {{ runner_name }}
+    --labels {{ github_runner_labels | join(',') }}
+    --work {{ github_runner_work_directory }}
+    --unattended
+    --replace
+  args:
+    chdir: "{{ github_runner_directory }}"
+  become_user: "{{ github_runner_user }}"
+  when: not runner_config_check.stat.exists
+  notify: "Restart github runner {{ runner_name }}"
+
+- name: "Crear archivo de configuración del servicio para {{ runner_name }}"
+  template:
+    src: github-runner.service.j2
+    dest: "/etc/systemd/system/github-runner-{{ runner_name }}.service"
+    owner: root
+    group: root
+    mode: "{{ github_runner_service_permissions }}"
+  vars:
+    runner_service_name: "{{ runner_name }}"
+  notify: 
+    - "Reload systemd"
+    - "Restart github runner {{ runner_name }}"
+
+- name: "Crear directorio de logs para {{ runner_name }}"
+  file:
+    path: "/var/log/github-runner/{{ runner_name }}"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "0755"
+    state: directory
+
+- name: "Configurar script de inicio para {{ runner_name }}"
+  template:
+    src: start-runner.sh.j2
+    dest: "{{ github_runner_directory }}/{{ runner_name }}/start.sh"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "0755"
+  vars:
+    runner_service_name: "{{ runner_name }}"
+
+- name: "Configurar script de parada para {{ runner_name }}"
+  template:
+    src: stop-runner.sh.j2
+    dest: "{{ github_runner_directory }}/{{ runner_name }}/stop.sh"
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "0755"
+  vars:
+    runner_service_name: "{{ runner_name }}"

@@ -1,0 +1,39 @@
+# Handlers para GitHub Actions Runner
+---
+
+- name: "Mark dependencies installed"
+  file:
+    path: "{{ github_runner_directory }}/.dependencies_installed"
+    state: touch
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: "0644"
+
+- name: "Reload systemd"
+  systemd:
+    daemon_reload: yes
+
+- name: "Restart github runner {{ runner_name }}"
+  systemd:
+    name: "github-runner-{{ runner_name }}"
+    state: restarted
+    enabled: yes
+  when: runner_name is defined
+
+- name: "Stop github runner service"
+  systemd:
+    name: "github-runner-{{ item }}"
+    state: stopped
+    enabled: no
+  loop: "{{ range(1, github_runner_max_instances + 1) | list }}"
+  vars:
+    item: "{{ github_runner_name_prefix }}-{{ inventory_hostname }}-{{ item }}"
+
+- name: "Start github runner service"
+  systemd:
+    name: "github-runner-{{ item }}"
+    state: started
+    enabled: yes
+  loop: "{{ range(1, github_runner_max_instances + 1) | list }}"
+  vars:
+    item: "{{ github_runner_name_prefix }}-{{ inventory_hostname }}-{{ item }}"

@@ -3,21 +3,26 @@
 # Información del equipo
 team_info:
   name: "cicd"
-  description: "Equipo especializado en integración y despliegue continuo"
-  emoji: ""
+  description: "Equipo especializado en integración y despliegue continuo con GitHub Actions"
+  emoji: "🚀"
 
-# Configuración de Jenkins
-jenkins_config:
-  port: 8080
-  home_directory: "/var/lib/jenkins"
-  admin_user: "admin"
-  java_options: "-Xmx1024m"
+# Configuración de GitHub Actions
+github_actions_config:
+  runner_version: "2.311.0"
+  runner_directory: "/opt/actions-runner"
+  runner_user: "github-runner"
+  runner_group: "github-runner"
+  max_runners: 3
+  labels: ["infra-made-easy", "self-hosted", "linux", "x64"]
+  runner_name_prefix: "ime-runner"
   
 # Configuración de Docker
 docker_config:
   enable_docker_in_docker: true
-  docker_group_members: ["jenkins"]
+  docker_group_members: ["github-runner"]
   enable_docker_compose: true
+  enable_buildx: true
+  enable_registry_mirror: false
   
 # Repositorios a monitorear
 repositories:
@@ -50,9 +55,9 @@ deployment_config:
   
 # Puertos a abrir
 firewall_ports:
-  - 8080  # Jenkins
-  - 9115  # Jenkins metrics exporter
-  - 50000 # Jenkins agent port
+  - 8080  # GitHub Actions Dashboard (opcional)
+  - 9100  # Node Exporter
+  - 443   # HTTPS para webhooks
   
 # Integraciones con otros equipos
 integrations:
@@ -69,8 +74,9 @@ integrations:
     
   monitoring:
     enable: true
-    metrics_port: 9115
-    jenkins_exporter_enabled: true
+    metrics_port: 9100
+    github_actions_exporter_enabled: true
+    workflow_metrics_enabled: true
     
   traefik:
     enable: true
