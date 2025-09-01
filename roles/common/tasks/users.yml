@@ -3,6 +3,38 @@
 - name: "Cargar configuración de usuarios"
   include_vars: "{{ playbook_dir }}/users.yml"
 
+- name: "Crear grupos docker si se necesita"
+  group:
+    name: docker
+    state: present
+  when: 
+    - users is defined
+    - users | map(attribute='groups') | flatten | select('equalto', 'docker') | list | length > 0
+
+- name: "Crear grupos personalizados si es necesario"
+  group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ custom_groups | unique }}"
+  vars:
+    # Grupos que definitivamente existen en sistemas Linux estándar
+    standard_groups:
+      - sudo
+      - adm
+      - root
+      - users
+      - staff
+    # Grupos que pueden no existir pero son comunes
+    optional_groups:
+      - docker
+      - www-data
+      - systemd-journal
+    all_groups: "{{ users | map(attribute='groups') | flatten | unique }}"
+    custom_groups: "{{ all_groups | difference(standard_groups) | difference(optional_groups) }}"
+  when: 
+    - users is defined
+    - custom_groups | length > 0
+
 - name: "Crear usuarios del sistema"
   user:
     name: "{{ item.user }}"
@@ -55,6 +87,17 @@
   loop: "{{ cleanup_users | subelements('authorized_keys', skip_missing=True) }}"
   when: cleanup_users is defined
   ignore_errors: yes
+
+- name: "Agregar usuarios al grupo docker (si existe)"
+  user:
+    name: "{{ item.user }}"
+    groups: docker
+    append: yes
+  loop: "{{ users }}"
+  when:
+    - users is defined
+    - "'docker' in item.groups"
+  ignore_errors: yes  # El grupo docker puede no existir hasta que se instale
 
 - name: "Mostrar resumen de usuarios configurados"
   debug:

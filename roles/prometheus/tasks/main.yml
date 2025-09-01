@@ -78,4 +78,4 @@
       - "Prometheus configurado exitosamente"
       - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ prometheus.port }}"
       - "Configuración: {{ prometheus.config_dir }}/prometheus.yml"
-      - "💾 Datos: {{ prometheus.data_dir }}"
+      - "Datos: {{ prometheus.data_dir }}"

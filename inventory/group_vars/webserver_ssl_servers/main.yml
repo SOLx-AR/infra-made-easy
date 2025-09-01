@@ -1,12 +1,12 @@
-# 🌍 VARIABLES EQUIPO WEBSERVER + SSL
+# VARIABLES EQUIPO WEBSERVER + SSL
 
-# 🏷️ Información del equipo
+# Información del equipo
 team_info:
   name: "webserver-ssl"
   description: "Equipo especializado en servidores web con SSL y dominios"
-  emoji: "🌍"
+  emoji: ""
 
-# 🌐 Configuración de Nginx
+# Configuración de Nginx
 nginx_config:
   worker_processes: "auto"
   worker_connections: 1024
@@ -15,26 +15,26 @@ nginx_config:
   enable_gzip: true
   enable_http2: true
   
-# 🔒 Configuración SSL
+# Configuración SSL
 ssl_config:
   provider: "letsencrypt"
   key_size: 2048
   enable_hsts: true
   enable_ocsp_stapling: true
   
-# 🌐 Dominios a configurar
+# Dominios a configurar
 domains:
   - "web1.curso-infra.com"
   - "web2.curso-infra.com" 
   - "web3.curso-infra.com"
   
-# 📁 Configuración de archivos
+# Configuración de archivos
 web_config:
   document_root: "/var/www/html"
   index_files: ["index.html", "index.htm"]
   enable_directory_listing: false
   
-# 📊 Configuración de métricas (para equipo de monitoreo)
+# Configuración de métricas (para equipo de monitoreo)
 metrics_config:
   enable_nginx_exporter: true
   nginx_exporter_port: 9113
@@ -43,14 +43,14 @@ metrics_config:
     - "127.0.0.1"
     # Se agregarán las IPs del equipo de monitoreo
     
-# 🔓 Puertos a abrir
+# Puertos a abrir
 firewall_ports:
   - 80    # HTTP
   - 443   # HTTPS
   - 8080  # Puerto alternativo
   - 9113  # Nginx metrics exporter
 
-# 🔗 Integraciones con otros equipos
+# Integraciones con otros equipos
 integrations:
   monitoring:
     enable: true

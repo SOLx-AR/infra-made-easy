@@ -1,0 +1,42 @@
+# Configuración de logrotate para curso-infra
+# Generado por Ansible - Role: common
+
+# Logs de aplicaciones del curso
+/var/log/curso-infra/*.log {
+    daily
+    missingok
+    rotate {{ logging_config.log_retention_days | default(30) }}
+    compress
+    delaycompress
+    notifempty
+    create 644 root root
+    maxsize {{ logging_config.max_log_size | default('100M') }}
+}
+
+# Logs de nginx si existe
+/var/log/nginx/*.log {
+    daily
+    missingok
+    rotate {{ logging_config.log_retention_days | default(30) }}
+    compress
+    delaycompress
+    notifempty
+    create 644 www-data www-data
+    postrotate
+        if [ -f /var/run/nginx.pid ]; then
+            kill -USR1 `cat /var/run/nginx.pid`
+        fi
+    endscript
+}
+
+# Logs de Jenkins si existe
+/var/log/jenkins/*.log {
+    daily
+    missingok
+    rotate {{ logging_config.log_retention_days | default(30) }}
+    compress
+    delaycompress
+    notifempty
+    create 644 jenkins jenkins
+    maxsize {{ logging_config.max_log_size | default('100M') }}
+}

@@ -185,6 +185,12 @@ ansible-galaxy install -r requirements.yml
 # 6. Verificar que todo esté configurado correctamente
 ./verify-setup.sh
 
+# 📊 Scripts de Verificación por Equipo
+./verify-all-teams.sh           # Verificar todos los equipos
+./verify-monitoring.sh          # Stack Prometheus + Grafana  
+./verify-webserver-ssl.sh       # Servidores web con SSL
+./verify-security-lynis.sh      # Auditoría de seguridad
+
 # 7. (OPCIONAL) Para sesiones futuras, usa el script de activación rápida
 ./activate-env.sh
 ```

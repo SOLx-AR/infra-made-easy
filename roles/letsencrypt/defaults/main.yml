@@ -1,0 +1,35 @@
+---
+# LETSENCRYPT - Configuración por defecto
+letsencrypt:
+  # Configuración básica
+  email: "admin@curso-infra.com"  # Email para registro en Let's Encrypt
+  staging: false  # true para testing, false para producción
+  
+  # Directorios
+  config_dir: "/etc/letsencrypt"
+  work_dir: "/var/lib/letsencrypt"
+  logs_dir: "/var/log/letsencrypt"
+  webroot_path: "/var/www/html"
+  
+  # Configuración del certificado
+  key_size: 4096
+  agree_tos: true
+  
+  # Renovación automática
+  auto_renew: true
+  renew_cron_minute: "30"
+  renew_cron_hour: "2"
+  
+  # Configuración de seguridad SSL
+  ssl_protocols: "TLSv1.2 TLSv1.3"
+  ssl_ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+  ssl_prefer_server_ciphers: "off"
+  
+  # Headers de seguridad
+  security_headers:
+    hsts_max_age: "31536000"
+    hsts_include_subdomains: true
+    hsts_preload: true
+    content_type_nosniff: true
+    frame_deny: true
+    xss_protection: true

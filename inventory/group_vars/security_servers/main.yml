@@ -1,12 +1,12 @@
-# 🔒 VARIABLES EQUIPO SEGURIDAD
+# VARIABLES EQUIPO SEGURIDAD
 
-# 🏷️ Información del equipo
+# Información del equipo
 team_info:
   name: "security-lynis"
   description: "Equipo especializado en auditoría y hardening de seguridad"
-  emoji: "🔒"
+  emoji: ""
 
-# 🔍 Configuración de Lynis
+# Configuración de Lynis
 lynis_config:
   version: "latest"
   audit_frequency: "daily"
@@ -14,14 +14,14 @@ lynis_config:
   report_format: "html"
   upload_reports: false
   
-# 🛡️ Configuración de Fail2ban
+# Configuración de Fail2ban
 fail2ban_config:
   bantime: 3600
   findtime: 600
   maxretry: 5
   backend: "auto"
   
-# 🔧 Herramientas de seguridad a instalar
+# Herramientas de seguridad a instalar
 security_tools:
   - lynis
   - fail2ban
@@ -32,14 +32,14 @@ security_tools:
   - auditd
   - clamav
   
-# 📊 Configuración de reportes
+# Configuración de reportes
 reporting_config:
   report_directory: "/var/log/security-audit"
   enable_email_reports: false
   enable_web_dashboard: true
   retention_days: 90
   
-# 🎯 Servidores a auditar (otros equipos)
+# Servidores a auditar (otros equipos)
 audit_targets:
   monitoring_servers:
     - "{{ lookup('env', 'MONITORING_SERVER_IP') }}"
@@ -51,11 +51,11 @@ audit_targets:
   traefik_servers:
     - "{{ lookup('env', 'TRAEFIK_SERVER_IP') }}"
     
-# 🔓 Puertos para métricas de seguridad
+# Puertos para métricas de seguridad
 firewall_ports:
   - 9114  # Security metrics exporter
   
-# 🔗 Integraciones con otros equipos
+# Integraciones con otros equipos
 integrations:
   monitoring:
     enable: true

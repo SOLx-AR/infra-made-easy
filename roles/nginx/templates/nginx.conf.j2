@@ -1,0 +1,75 @@
+# Configuración principal de Nginx
+# Generado por Ansible - Role: nginx
+
+user www-data;
+worker_processes {{ nginx_config.worker_processes | default('auto') }};
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections {{ nginx_config.worker_connections | default(1024) }};
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    # Basic Settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout {{ nginx_config.keepalive_timeout | default(65) }};
+    types_hash_max_size 2048;
+    server_tokens off;
+
+    # MIME
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Client Settings
+    client_max_body_size {{ nginx_config.client_max_body_size | default('50M') }};
+    client_body_timeout 12;
+    client_header_timeout 12;
+    send_timeout 10;
+
+    # Gzip Settings
+{% if nginx_config.enable_gzip | default(true) %}
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+{% endif %}
+
+    # Logging Settings
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+{% if nginx_config.enable_http2 | default(true) %}
+    # HTTP/2 Support
+    http2_max_field_size 16k;
+    http2_max_header_size 32k;
+{% endif %}
+
+    # Virtual Host Configs
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}

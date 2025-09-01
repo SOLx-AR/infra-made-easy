@@ -31,10 +31,11 @@
         
     - name: "Crear página web personalizada"
       template:
-        src: ansible/roles/common/templates/etapa1-index.html.j2
+        src: etapa1-index.html.j2
         dest: /var/www/html/index.html
         owner: www-data
         group: www-data
+        mode: '0644'
         
     - name: "Permitir tráfico web en firewall"
       ufw:
@@ -51,4 +52,4 @@
           - "Estudiante: {{ student_name }}"
           - "Tu servidor está disponible en: http://{{ ansible_default_ipv4.address }}"
           - "Siguiente paso: Elige un equipo para la Etapa 2"
-          - "📆 Lee la documentación en docs/ETAPA2.md"
+          - "Lee la documentación en docs/ETAPA2.md"

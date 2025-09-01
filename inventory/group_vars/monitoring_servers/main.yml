@@ -1,33 +1,33 @@
-# 📈 VARIABLES EQUIPO MONITOREO
+# VARIABLES EQUIPO MONITOREO
 
-# 🏷️ Información del equipo
+# Información del equipo
 team_info:
   name: "monitoring"
   description: "Equipo especializado en monitoreo y observabilidad"
-  emoji: "📈"
+  emoji: ""
 
-# 🛠️ Configuración de Prometheus
+# Configuración de Prometheus
 prometheus_config:
   port: 9090
   retention_time: "30d"
   scrape_interval: "15s"
   evaluation_interval: "15s"
   
-# 📊 Configuración de Grafana  
+# Configuración de Grafana
 grafana_config:
   port: 3000
   admin_user: "admin"
   admin_password: "admin123"
   enable_anonymous: false
   
-# 🚨 Configuración de alertas
+# Configuración de alertas
 alertmanager_config:
   port: 9093
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
   enable_slack: true
   
-# 🎯 Targets a monitorear
+# Targets a monitorear
 monitoring_targets:
   - name: "webserver_ssl_servers"
     port: 9113  # Nginx exporter
@@ -45,7 +45,7 @@ monitoring_targets:
     port: 8080  # Traefik metrics
     metrics_path: "/metrics"
 
-# 🔓 Puertos a abrir
+# Puertos a abrir
 firewall_ports:
   - 9090  # Prometheus
   - 3000  # Grafana  

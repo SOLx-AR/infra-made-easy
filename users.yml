@@ -3,43 +3,15 @@
 
 # Usuarios administradores del curso
 admin_users:
-  - user: juan
-    email: juan@curso-infra.com
+  - user: nico
+    email: nico@solx.ar
     groups:
       - sudo
-      - ssh-access
-      - docker
       - adm
-      - systemd-journal
     authorized_keys:
-      - name: juan
-        key: "{{ lookup('file', 'users/juan/id_rsa.pub') }}"
+      - name: nico
+        key: "{{ lookup('file', 'users/nico/id_rsa.pub') }}"
         
-  - user: maria
-    email: maria@curso-infra.com
-    groups:
-      - sudo
-      - ssh-access
-      - docker
-      - www-data
-      - adm
-      - systemd-journal
-    authorized_keys:
-      - name: maria
-        key: "{{ lookup('file', 'users/maria/id_rsa.pub') }}"
-        
-  - user: pedro
-    email: pedro@curso-infra.com
-    groups:
-      - sudo
-      - ssh-access
-      - docker
-      - security
-      - adm
-      - systemd-journal
-    authorized_keys:
-      - name: pedro
-        key: "{{ lookup('file', 'users/pedro/id_rsa.pub') }}"
 
 # Usuarios adicionales por servidor/equipo (se pueden agregar dinámicamente)
 additional_users: []

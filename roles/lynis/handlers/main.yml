@@ -1,0 +1,15 @@
+---
+# HANDLERS LYNIS
+- name: daemon reload
+  systemd:
+    daemon_reload: yes
+
+- name: restart security-exporter
+  systemd:
+    name: security-exporter
+    state: restarted
+
+- name: reload security-exporter
+  systemd:
+    name: security-exporter
+    state: reloaded

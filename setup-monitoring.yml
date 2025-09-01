@@ -4,15 +4,76 @@
   hosts: monitoring_servers
   become: yes
   
+  vars:
+    # Variables específicas para el stack de monitoring
+    monitoring_stack_version: "2024.01"
+    enable_alerting: false  # Para futuras implementaciones
+    
   pre_tasks:
-    - name: "Actualizar paquetes del sistema"
+    - name: "🔄 Actualizar paquetes del sistema"
       apt:
         update_cache: yes
         upgrade: yes
         
+    - name: "📋 Mostrar información del servidor de monitoring"
+      debug:
+        msg:
+          - "🖥️ Servidor: {{ inventory_hostname }}"
+          - "🌍 IP: {{ ansible_default_ipv4.address }}"
+          - "🏷️ Nombre: {{ server_name | default('monitoring-server') }}"
+          - "👥 Equipo: {{ team_type | default('monitoring') }}"
+        
   roles:
-    - common           # Configuración base + usuarios
-    - docker          # Docker para contenedores
-    - prometheus      # Sistema de métricas
-    - grafana         # Dashboards y visualización
-    - node-exporter   # Métricas del sistema
+    - common           # ⚙️ Configuración base + usuarios
+    - docker          # 🐳 Docker para contenedores (futuro uso)
+    - node-exporter   # 📊 Métricas del sistema (instalar primero)
+    - prometheus      # 🔍 Sistema de métricas y recolección
+    - grafana         # 📈 Dashboards y visualización
+    
+  post_tasks:
+    - name: "⏳ Esperar a que todos los servicios estén disponibles"
+      wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: "{{ item }}"
+        delay: 5
+        timeout: 60
+      loop:
+        - 9090  # Prometheus
+        - 3000  # Grafana
+        - 9100  # Node Exporter
+      ignore_errors: yes
+      
+    - name: "🎯 Verificar estado de servicios"
+      systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - prometheus
+        - grafana-server
+        - node-exporter
+      register: service_status
+      
+    - name: "✅ Mostrar resumen de instalación"
+      debug:
+        msg:
+          - "🚀 Stack de Monitoring configurado exitosamente!"
+          - ""
+          - "📊 PROMETHEUS (Métricas):"
+          - "   URL: http://{{ ansible_default_ipv4.address }}:9090"
+          - "   Status: {{ 'ACTIVO' if service_status.results[0].status.ActiveState == 'active' else 'ERROR' }}"
+          - ""
+          - "📈 GRAFANA (Dashboards):"
+          - "   URL: http://{{ ansible_default_ipv4.address }}:3000"
+          - "   Usuario: admin"
+          - "   Contraseña: admin123 (⚠️ CAMBIAR EN PRODUCCIÓN)"
+          - "   Status: {{ 'ACTIVO' if service_status.results[1].status.ActiveState == 'active' else 'ERROR' }}"
+          - ""
+          - "🖥️ NODE EXPORTER (Métricas Sistema):"
+          - "   URL: http://{{ ansible_default_ipv4.address }}:9100/metrics"
+          - "   Status: {{ 'ACTIVO' if service_status.results[2].status.ActiveState == 'active' else 'ERROR' }}"
+          - ""
+          - "🔗 PRÓXIMOS PASOS:"
+          - "   1. Cambiar contraseña de Grafana"
+          - "   2. Configurar otros servidores con node-exporter"
+          - "   3. Verificar dashboards automáticos en Grafana"
+          - "   4. Configurar alertas (opcional)"

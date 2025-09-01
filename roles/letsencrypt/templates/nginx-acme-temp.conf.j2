@@ -1,0 +1,33 @@
+# Configuración temporal para ACME challenge
+# Dominio: {{ domain }}
+# Generado por Ansible - Role: letsencrypt
+
+server {
+    listen 80;
+    server_name {{ domain }};
+    
+    # Root directory
+    root {{ letsencrypt.webroot_path }};
+    index index.html index.htm;
+    
+    # ACME challenge location
+    location /.well-known/acme-challenge/ {
+        root {{ letsencrypt.webroot_path }};
+        try_files $uri =404;
+    }
+    
+    # Temporary page during SSL setup
+    location / {
+        return 200 "🔧 Configurando SSL para {{ domain }}...\nPor favor espera unos minutos.\n";
+        add_header Content-Type text/plain;
+    }
+    
+    # Security headers (basic)
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # Logging
+    access_log /var/log/nginx/{{ domain }}-temp-access.log;
+    error_log /var/log/nginx/{{ domain }}-temp-error.log;
+}

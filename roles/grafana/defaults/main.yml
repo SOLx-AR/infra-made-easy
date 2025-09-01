@@ -1,0 +1,52 @@
+---
+# GRAFANA - Configuración por defecto
+grafana:
+  # Versión y básicos
+  version: "10.2.2"
+  port: 3000
+  
+  # Directorios
+  config_dir: "/etc/grafana"
+  data_dir: "/var/lib/grafana"
+  logs_dir: "/var/log/grafana"
+  plugins_dir: "/var/lib/grafana/plugins"
+  
+  # Configuración de base de datos
+  database:
+    type: "sqlite3"
+    path: "/var/lib/grafana/grafana.db"
+  
+  # Configuración de servidor
+  domain: "{{ ansible_default_ipv4.address }}"
+  root_url: "http://{{ ansible_default_ipv4.address }}:3000"
+  
+  # Seguridad
+  admin_user: "admin"
+  admin_password: "admin123"  # CAMBIAR EN PRODUCCIÓN
+  secret_key: "SW2YcwTIb9zpOOhoPsMm"
+  
+  # Configuración de usuarios
+  allow_sign_up: false
+  auto_assign_org: true
+  auto_assign_org_role: "Viewer"
+  
+  # Datasources automáticos
+  datasources:
+    - name: "Prometheus"
+      type: "prometheus"
+      url: "http://localhost:9090"
+      access: "proxy"
+      is_default: true
+      
+  # Plugins a instalar
+  plugins:
+    - "grafana-clock-panel"
+    - "grafana-simple-json-datasource"
+    - "grafana-worldmap-panel"
+    
+  # Dashboards predeterminados
+  dashboards:
+    - name: "Node Exporter Full"
+      url: "https://grafana.com/api/dashboards/1860/revisions/27/download"
+    - name: "Prometheus 2.0 Overview"
+      url: "https://grafana.com/api/dashboards/3662/revisions/2/download"

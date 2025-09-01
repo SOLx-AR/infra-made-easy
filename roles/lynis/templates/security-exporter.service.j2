@@ -1,0 +1,35 @@
+[Unit]
+Description=Security Metrics Exporter for Prometheus
+Documentation=https://github.com/prometheus/client_python
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/bin/python3 {{ lynis.data_dir }}/security-exporter.py
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory={{ lynis.data_dir }}
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=security-exporter
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ lynis.data_dir }}
+ReadWritePaths={{ lynis.logs_dir }}
+ReadWritePaths={{ lynis.reports_dir }}
+
+[Install]
+WantedBy=multi-user.target

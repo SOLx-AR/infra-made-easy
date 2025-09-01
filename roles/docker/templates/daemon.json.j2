@@ -1,0 +1,27 @@
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{ docker_config.log_max_size | default('10m') }}",
+    "max-file": "{{ docker_config.log_max_files | default('3') }}"
+  },
+  "storage-driver": "overlay2",
+  "live-restore": true,
+  "userland-proxy": false,
+  "no-new-privileges": true,
+  "experimental": false,
+{% if docker_config.insecure_registries is defined %}
+  "insecure-registries": {{ docker_config.insecure_registries | to_json }},
+{% endif %}
+{% if docker_config.registry_mirrors is defined %}
+  "registry-mirrors": {{ docker_config.registry_mirrors | to_json }},
+{% endif %}
+  "default-ulimits": {
+    "nofile": {
+      "Name": "nofile",
+      "Hard": 64000,
+      "Soft": 64000
+    }
+  },
+  "metrics-addr": "127.0.0.1:9323",
+  "experimental": false
+}
