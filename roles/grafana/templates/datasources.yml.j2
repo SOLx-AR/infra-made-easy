@@ -1,0 +1,37 @@
+# Configuración automática de DataSources
+# Generado por Ansible - Role: grafana
+
+apiVersion: 1
+
+datasources:
+{% for datasource in grafana.datasources %}
+  - name: {{ datasource.name }}
+    type: {{ datasource.type }}
+    access: {{ datasource.access }}
+    url: {{ datasource.url }}
+    isDefault: {{ datasource.is_default | lower }}
+    editable: true
+    jsonData:
+      timeInterval: "5s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+{% endfor %}
+
+  # DataSource adicional para Alertmanager (si está habilitado)
+{% if prometheus.enable_alertmanager | default(false) %}
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://localhost:9093
+    jsonData:
+      implementation: prometheus
+{% endif %}
+
+  # DataSource para logs (si Loki está disponible)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    editable: true
+    jsonData:
+      maxLines: 1000

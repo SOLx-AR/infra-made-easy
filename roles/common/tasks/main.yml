@@ -1,29 +1,29 @@
 ---
-# 🔧 ROLE COMMON - Configuración base para todos los servidores
-- name: "🔧 Instalar paquetes básicos del sistema"
+# ROLE COMMON - Configuración base para todos los servidores
+- name: "Instalar paquetes básicos del sistema"
   apt:
     name: "{{ common_packages }}"
     state: present
 
-- name: "👥 Gestionar usuarios del sistema"
+- name: "Gestionar usuarios del sistema"
   include_tasks: users.yml
 
-- name: "🔥 Configurar firewall básico"
+- name: "Configurar firewall básico"
   ufw:
     state: enabled
     policy: deny
     direction: incoming
 
-- name: "🔓 Permitir SSH"
+- name: "Permitir SSH"
   ufw:
     rule: allow
     port: "{{ security_settings.ssh_port }}"
 
-- name: "⏰ Configurar timezone"
+- name: "Configurar timezone"
   timezone:
     name: "{{ system_timezone }}"
 
-- name: "📋 Configurar logrotate"
+- name: "Configurar logrotate"
   template:
     src: logrotate.conf.j2
     dest: /etc/logrotate.d/curso-infra

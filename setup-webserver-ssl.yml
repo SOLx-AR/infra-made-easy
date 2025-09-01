@@ -1,17 +1,17 @@
 ---
-# 🌍 EQUIPO WEBSERVER + SSL - Nginx con SSL y dominios (Ultra Modular)
-- name: "🌍 ETAPA 2 - Configurar Webserver con SSL"
+# EQUIPO WEBSERVER + SSL - Nginx con SSL y dominios (Ultra Modular)
+- name: "ETAPA 2 - Configurar Webserver con SSL"
   hosts: webserver_ssl_servers
   become: yes
   
   pre_tasks:
-    - name: "📦 Actualizar paquetes del sistema"
+    - name: "Actualizar paquetes del sistema"
       apt:
         update_cache: yes
         upgrade: yes
         
   roles:
-    - common         # 🔧 Configuración base + usuarios
-    - nginx          # 🌐 Servidor web
-    - letsencrypt    # 🔒 Certificados SSL
-    - node-exporter  # 🖥️ Métricas para monitoreo
+    - common         # Configuración base + usuarios
+    - nginx          # Servidor web
+    - letsencrypt    # Certificados SSL
+    - node-exporter  # Métricas para monitoreo

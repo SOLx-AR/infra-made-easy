@@ -1,0 +1,91 @@
+# Configuración de Prometheus
+# Generado por Ansible - Role: prometheus
+
+global:
+  scrape_interval: {{ prometheus.scrape_interval | default('15s') }}
+  evaluation_interval: {{ prometheus.evaluation_interval | default('15s') }}
+  external_labels:
+    cluster: 'curso-infra-made-easy'
+    environment: '{{ ansible_environment | default("production") }}'
+    instance: '{{ ansible_hostname }}'
+    server: '{{ server_name | default(ansible_hostname) }}'
+
+# Configuración de reglas de alertas
+rule_files:
+  - "{{ prometheus.rules_dir }}/*.yml"
+
+# Configuración de targets de scraping
+scrape_configs:
+  # Prometheus se monitorea a sí mismo
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:{{ prometheus.port | default(9090) }}']
+
+  # Node exporters de todos los servidores
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+{% for host in groups.all %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[host]["ansible_default_ipv4"]["address"] }}:9100'
+{% endif %}
+{% endfor %}
+
+{% if monitoring_targets is defined %}
+  # Targets específicos de monitoreo
+{% for target in monitoring_targets %}
+  - job_name: '{{ target.name }}'
+    static_configs:
+      - targets:
+{% for group in groups[target.name] | default([]) %}
+{% if hostvars[group]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[group]["ansible_default_ipv4"]["address"] }}:{{ target.port }}'
+{% endif %}
+{% endfor %}
+    metrics_path: '{{ target.metrics_path | default("/metrics") }}'
+    scrape_interval: {{ target.scrape_interval | default('30s') }}
+{% endfor %}
+{% endif %}
+
+  # Nginx exporters
+  - job_name: 'nginx'
+    static_configs:
+      - targets:
+{% for host in groups['webserver_ssl_servers'] | default([]) %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[host]["ansible_default_ipv4"]["address"] }}:9113'
+{% endif %}
+{% endfor %}
+
+  # Jenkins exporters  
+  - job_name: 'jenkins'
+    static_configs:
+      - targets:
+{% for host in groups['cicd_servers'] | default([]) %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[host]["ansible_default_ipv4"]["address"] }}:9115'
+{% endif %}
+{% endfor %}
+
+  # Security metrics
+  - job_name: 'security'
+    static_configs:
+      - targets:
+{% for host in groups['security_servers'] | default([]) %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[host]["ansible_default_ipv4"]["address"] }}:9114'
+{% endif %}
+{% endfor %}
+
+  # Traefik metrics
+  - job_name: 'traefik'
+    static_configs:
+      - targets:
+{% for host in groups['traefik_servers'] | default([]) %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+          - '{{ hostvars[host]["ansible_default_ipv4"]["address"] }}:8080'
+{% endif %}
+{% endfor %}
+
+# Configuración de retención de datos
+# NOTA: La configuración de retención se maneja en el servicio systemd

@@ -1,27 +1,27 @@
 ---
-# 🌐 NGINX - Configuración por defecto
+# NGINX - Configuración por defecto
 nginx:
-  # 🔧 Configuración básica
+  # Configuración básica
   worker_processes: "auto"
   worker_connections: 1024
   keepalive_timeout: 65
   client_max_body_size: "50M"
   
-  # 📁 Rutas
+  # Rutas
   document_root: "/var/www/html"
   index_files: ["index.html", "index.htm"]
   
-  # 🌐 Puertos
+  # Puertos
   http_port: 80
   https_port: 443
   firewall_ports: [80, 443]
   
-  # 🚀 Optimizaciones
+  # Optimizaciones
   enable_gzip: true
   enable_http2: true
   enable_server_tokens: false
   
-  # 📊 Métricas
+  # Métricas
   enable_status_page: true
   status_page_path: "/nginx_status"
   
@@ -29,7 +29,7 @@ nginx:
   create_default_page: true
   default_page_title: "Nginx Server"
   
-  # 🔐 Seguridad
+  # Seguridad
   security_headers:
     x_frame_options: "SAMEORIGIN"
     x_content_type_options: "nosniff"

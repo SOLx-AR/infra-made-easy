@@ -1,5 +1,5 @@
 ---
-# 🐳 DOCKER HANDLERS
+# DOCKER HANDLERS
 - name: restart docker
   systemd:
     name: docker

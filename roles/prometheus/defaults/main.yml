@@ -1,11 +1,11 @@
 ---
-# 📊 PROMETHEUS - Configuración por defecto
+# PROMETHEUS - Configuración por defecto
 prometheus:
-  # 🔧 Versión y básicos
+  # Versión y básicos
   version: "2.45.0"
   port: 9090
   
-  # 📁 Directorios
+  # Directorios
   config_dir: "/etc/prometheus"
   data_dir: "/var/lib/prometheus"
   rules_dir: "/etc/prometheus/rules"
@@ -18,7 +18,7 @@ prometheus:
   retention_time: "30d"
   retention_size: "10GB"
   
-  # 🎯 Targets por defecto
+  # Targets por defecto
   scrape_configs:
     - job_name: "prometheus"
       static_configs:
@@ -32,6 +32,6 @@ prometheus:
   enable_alertmanager: false
   alertmanager_url: "localhost:9093"
   
-  # 🔐 Seguridad
+  # Seguridad
   enable_admin_api: false
   enable_lifecycle: true

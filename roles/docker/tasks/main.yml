@@ -1,6 +1,6 @@
 ---
-# 🐳 ROLE DOCKER - Instalación y configuración modular
-- name: "📦 Instalar dependencias de Docker"
+# ROLE DOCKER - Instalación y configuración modular
+- name: "Instalar dependencias de Docker"
   apt:
     name:
       - apt-transport-https
@@ -10,17 +10,17 @@
       - lsb-release
     state: present
 
-- name: "🔑 Agregar clave GPG de Docker"
+- name: "Agregar clave GPG de Docker"
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
 
-- name: "📋 Agregar repositorio de Docker"
+- name: "Agregar repositorio de Docker"
   apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: present
 
-- name: "🐳 Instalar Docker Engine"
+- name: "Instalar Docker Engine"
   apt:
     name:
       - docker-ce
@@ -29,19 +29,19 @@
     state: present
     update_cache: yes
 
-- name: "📦 Instalar Docker Compose"
+- name: "Instalar Docker Compose"
   pip:
     name: docker-compose
     state: present
   when: docker.install_compose
 
-- name: "🚀 Iniciar y habilitar Docker"
+- name: "Iniciar y habilitar Docker"
   systemd:
     name: docker
     state: started
     enabled: yes
 
-- name: "👥 Agregar usuarios al grupo docker"
+- name: "Agregar usuarios al grupo docker"
   user:
     name: "{{ item }}"
     groups: docker
@@ -49,7 +49,7 @@
   loop: "{{ docker.users }}"
   when: docker.users is defined
 
-- name: "⚙️ Configurar daemon de Docker"
+- name: "Configurar daemon de Docker"
   template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
@@ -59,14 +59,14 @@
   notify: restart docker
   when: docker.custom_config
 
-- name: "🔓 Configurar firewall para Docker"
+- name: "Configurar firewall para Docker"
   ufw:
     rule: allow
     port: "{{ item }}"
   loop: "{{ docker.firewall_ports }}"
   when: docker.firewall_ports is defined
 
-- name: "🧹 Configurar limpieza automática"
+- name: "Configurar limpieza automática"
   cron:
     name: "Docker system prune"
     minute: "0"
@@ -74,14 +74,14 @@
     job: "docker system prune -f --volumes"
   when: docker.enable_auto_cleanup
 
-- name: "📊 Mostrar información de Docker"
+- name: "Mostrar información de Docker"
   debug:
     msg:
-      - "🎉 Docker configurado exitosamente"
-      - "🐳 Version: {{ docker_version.stdout if docker_version is defined else 'N/A' }}"
-      - "👥 Usuarios con acceso: {{ docker.users | join(', ') if docker.users is defined else 'Ninguno' }}"
+      - "Docker configurado exitosamente"
+      - "Version: {{ docker_version.stdout if docker_version is defined else 'N/A' }}"
+      - "Usuarios con acceso: {{ docker.users | join(', ') if docker.users is defined else 'Ninguno' }}"
 
-- name: "✅ Verificar Docker funcionando"
+- name: "Verificar Docker funcionando"
   command: docker --version
   register: docker_version
   changed_when: false

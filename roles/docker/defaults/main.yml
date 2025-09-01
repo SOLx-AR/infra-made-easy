@@ -1,29 +1,29 @@
 ---
-# 🐳 DOCKER - Configuración por defecto
+# DOCKER - Configuración por defecto
 docker:
-  # 📦 Instalación
+  # Instalación
   install_compose: true
-  install_buildx: false
+  version: "latest"
   
-  # 👥 Usuarios con acceso a Docker
-  users: []
+  # Usuarios con acceso a Docker
+  users:
+    - "{{ ansible_user }}"
   
-  # ⚙️ Configuración personalizada
-  custom_config: false
+  # Configuración personalizada
+  custom_config: true
   log_driver: "json-file"
   log_max_size: "10m"
   log_max_file: "3"
   
-  # 🌐 Red
-  bridge_ip: "172.17.0.1"
-  enable_experimental: false
+  # Red
+  default_bridge_ip: "172.17.0.1/16"
+  enable_ipv6: false
   
-  # 🔓 Firewall
+  # Firewall
   firewall_ports: []
   
-  # 🧹 Limpieza automática
+  # Limpieza automática
   enable_auto_cleanup: true
   
-  # 📊 Métricas
+  # Métricas
   enable_metrics: false
-  metrics_address: "127.0.0.1:9323"

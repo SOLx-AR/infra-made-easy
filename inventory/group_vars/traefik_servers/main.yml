@@ -1,12 +1,12 @@
-# ⚙️ VARIABLES EQUIPO TRAEFIK + ACME
+# VARIABLES EQUIPO TRAEFIK + ACME
 
-# 🏷️ Información del equipo
+# Información del equipo
 team_info:
   name: "traefik-acme"
   description: "Equipo especializado en load balancing y certificados automáticos"
-  emoji: "⚙️"
+  emoji: ""
 
-# ⚙️ Configuración de Traefik
+# Configuración de Traefik
 traefik_config:
   version: "v2.10"
   log_level: "INFO"
@@ -14,14 +14,14 @@ traefik_config:
   enable_api: true
   enable_ping: true
   
-# 🔒 Configuración ACME
+# Configuración ACME
 acme_config:
   email: "admin@curso-infra.com"
   certificate_resolver: "letsencrypt"
   challenge_type: "http"
   storage_file: "/acme.json"
   
-# 🌐 Dominios para certificados automáticos
+# Dominios para certificados automáticos
 acme_domains:
   - "*.curso-infra.com"
   - "web.curso-infra.com"
@@ -30,7 +30,7 @@ acme_domains:
   - "security.curso-infra.com"
   - "traefik.curso-infra.com"
   
-# 🔗 Servicios a balancear
+# Servicios a balancear
 load_balanced_services:
   - service_name: "webserver-ssl"
     domain: "web.curso-infra.com"
@@ -52,20 +52,20 @@ load_balanced_services:
     backend_port: 80
     enable_ssl: true
 
-# 🔓 Puertos a abrir
+# Puertos a abrir
 firewall_ports:
   - 80     # HTTP entrada
   - 443    # HTTPS entrada
   - 8080   # Dashboard de Traefik
   - 9090   # Métricas para Prometheus
   
-# 📊 Configuración de métricas
+# Configuración de métricas
 metrics_config:
   enable_metrics: true
   metrics_port: 9090
   metrics_path: "/metrics"
   
-# 🔗 Integraciones con otros equipos
+# Integraciones con otros equipos
 integrations:
   webserver_ssl:
     enable: true

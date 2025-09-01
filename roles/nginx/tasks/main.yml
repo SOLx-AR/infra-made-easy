@@ -1,13 +1,13 @@
 ---
-# 🌐 ROLE NGINX - Servidor web modular
-- name: "📦 Instalar Nginx"
+# ROLE NGINX - Servidor web modular
+- name: "Instalar Nginx"
   apt:
     name:
       - nginx
       - nginx-extras
     state: present
 
-- name: "⚙️ Configurar Nginx principal"
+- name: "Configurar Nginx principal"
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
@@ -17,7 +17,7 @@
     backup: yes
   notify: restart nginx
 
-- name: "🌐 Configurar sitio por defecto"
+- name: "Configurar sitio por defecto"
   template:
     src: default-site.conf.j2
     dest: /etc/nginx/sites-available/default
@@ -26,14 +26,14 @@
     mode: '0644'
   notify: restart nginx
 
-- name: "🔗 Habilitar sitio por defecto"
+- name: "Habilitar sitio por defecto"
   file:
     src: /etc/nginx/sites-available/default
     dest: /etc/nginx/sites-enabled/default
     state: link
   notify: restart nginx
 
-- name: "📄 Crear página web por defecto"
+- name: "Crear página web por defecto"
   template:
     src: index.html.j2
     dest: "{{ nginx.document_root }}/index.html"
@@ -42,27 +42,27 @@
     mode: '0644'
   when: nginx.create_default_page | default(true)
 
-- name: "🚀 Iniciar y habilitar Nginx"
+- name: "Iniciar y habilitar Nginx"
   systemd:
     name: nginx
     state: started
     enabled: yes
 
-- name: "🔓 Abrir puertos de Nginx en firewall"
+- name: "Abrir puertos de Nginx en firewall"
   ufw:
     rule: allow
     port: "{{ item }}"
   loop: "{{ nginx.firewall_ports }}"
 
-- name: "✅ Verificar configuración de Nginx"
+- name: "Verificar configuración de Nginx"
   command: nginx -t
   register: nginx_config_test
   changed_when: false
 
-- name: "📊 Mostrar estado de Nginx"
+- name: "Mostrar estado de Nginx"
   debug:
     msg:
-      - "🎉 Nginx configurado exitosamente"
-      - "🌐 Servidor corriendo en puerto {{ nginx.http_port }}"
-      - "📁 Document root: {{ nginx.document_root }}"
-      - "✅ Test de configuración: {{ 'PASSED' if nginx_config_test.rc == 0 else 'FAILED' }}"
+      - "Nginx configurado exitosamente"
+      - "Servidor corriendo en puerto {{ nginx.http_port }}"
+      - "Document root: {{ nginx.document_root }}"
+      - "Test de configuración: {{ 'PASSED' if nginx_config_test.rc == 0 else 'FAILED' }}"

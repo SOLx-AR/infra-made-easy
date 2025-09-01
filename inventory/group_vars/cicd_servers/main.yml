@@ -1,25 +1,25 @@
-# 🔄 VARIABLES EQUIPO CI/CD
+# VARIABLES EQUIPO CI/CD
 
-# 🏷️ Información del equipo
+# Información del equipo
 team_info:
   name: "cicd"
   description: "Equipo especializado en integración y despliegue continuo"
-  emoji: "🔄"
+  emoji: ""
 
-# 🔧 Configuración de Jenkins
+# Configuración de Jenkins
 jenkins_config:
   port: 8080
   home_directory: "/var/lib/jenkins"
   admin_user: "admin"
   java_options: "-Xmx1024m"
   
-# 🐳 Configuración de Docker
+# Configuración de Docker
 docker_config:
   enable_docker_in_docker: true
   docker_group_members: ["jenkins"]
   enable_docker_compose: true
   
-# 📦 Repositorios a monitorear
+# Repositorios a monitorear
 repositories:
   - name: "sample-web-app"
     url: "https://github.com/curso-infra/sample-web-app.git"
@@ -31,7 +31,7 @@ repositories:
     branch: "main"
     deploy_target: "monitoring_servers"
 
-# 🚀 Configuración de pipeline
+# Configuración de pipeline
 pipeline_config:
   enable_webhooks: true
   webhook_secret: "curso-infra-webhook-secret"
@@ -41,20 +41,20 @@ pipeline_config:
     - build
     - deploy
     
-# 🎯 Configuración de deployments
+# Configuración de deployments
 deployment_config:
   strategy: "rolling"
   timeout: 300
   rollback_enabled: true
   backup_before_deploy: true
   
-# 🔓 Puertos a abrir
+# Puertos a abrir
 firewall_ports:
   - 8080  # Jenkins
   - 9115  # Jenkins metrics exporter
   - 50000 # Jenkins agent port
   
-# 🔗 Integraciones con otros equipos
+# Integraciones con otros equipos
 integrations:
   webserver_ssl:
     enable: true

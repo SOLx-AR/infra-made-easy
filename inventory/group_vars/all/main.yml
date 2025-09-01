@@ -1,9 +1,9 @@
-# 🌍 VARIABLES GLOBALES - Aplican a todos los servidores
+# VARIABLES GLOBALES - Aplican a todos los servidores
 
-# 🕐 Configuración de tiempo
+# Configuración de tiempo
 system_timezone: "America/Mexico_City"
 
-# 🔧 Configuración básica del sistema
+# Configuración básica del sistema
 common_packages:
   - curl
   - wget
@@ -15,27 +15,27 @@ common_packages:
   - python3
   - python3-pip
 
-# 🔐 Configuración de seguridad
+# Configuración de seguridad
 security_settings:
   enable_firewall: true
   ssh_port: 22
   disable_root_login: true
   password_authentication: false
 
-# 📊 Configuración de monitoreo (para todos los servidores)
+# Configuración de monitoreo (para todos los servidores)
 monitoring_config:
   enable_node_exporter: true
   node_exporter_port: 9100
   metrics_retention: "30d"
 
-# 🌐 Configuración de red
+# Configuración de red
 network_config:
   enable_ipv6: false
   dns_servers:
     - "8.8.8.8"
     - "8.8.4.4"
 
-# 📋 Configuración de logs
+# Configuración de logs
 logging_config:
   log_retention_days: 30
   enable_logrotate: true

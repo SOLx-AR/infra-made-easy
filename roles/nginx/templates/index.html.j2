@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ team_info.name | default('Servidor Web') }} - Curso Infra</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #4a5568;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        .status {
+            background: #f7fafc;
+            border-left: 4px solid #48bb78;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .info {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Servidor Web Activo</h1>
+        
+        <div class="status">
+            <strong>Estado:</strong> Nginx funcionando correctamente
+        </div>
+
+        <div class="info">
+            <strong>Equipo:</strong> {{ team_info.description | default('Servidor web del curso de infraestructura') }}<br>
+            <strong>Servidor:</strong> {{ ansible_hostname | default('servidor-web') }}<br>
+            <strong>Dirección IP:</strong> {{ ansible_default_ipv4.address | default('N/A') }}<br>
+            <strong>Sistema:</strong> {{ ansible_distribution }} {{ ansible_distribution_version }}<br>
+            <strong>Document Root:</strong> <code>{{ web_config.document_root | default('/var/www/html') }}</code>
+        </div>
+
+        <h2>Configuración del Servidor</h2>
+        <ul>
+            <li><strong>Worker Processes:</strong> {{ nginx_config.worker_processes | default('auto') }}</li>
+            <li><strong>Worker Connections:</strong> {{ nginx_config.worker_connections | default(1024) }}</li>
+            <li><strong>Keepalive Timeout:</strong> {{ nginx_config.keepalive_timeout | default(65) }}s</li>
+            <li><strong>Max Body Size:</strong> {{ nginx_config.client_max_body_size | default('50M') }}</li>
+            <li><strong>Gzip:</strong> {{ 'Habilitado' if nginx_config.enable_gzip | default(true) else 'Deshabilitado' }}</li>
+            <li><strong>HTTP/2:</strong> {{ 'Habilitado' if nginx_config.enable_http2 | default(true) else 'Deshabilitado' }}</li>
+        </ul>
+
+{% if domains is defined %}
+        <h2>Dominios Configurados</h2>
+        <ul>
+{% for domain in domains %}
+            <li><code>{{ domain }}</code></li>
+{% endfor %}
+        </ul>
+{% endif %}
+
+        <h2>Puertos Abiertos</h2>
+        <ul>
+{% for port in firewall_ports | default([80, 443]) %}
+            <li>Puerto {{ port }}</li>
+{% endfor %}
+        </ul>
+
+        <div class="footer">
+            <p>Configurado con Ansible | Curso de Infraestructura | {{ ansible_date_time.date }}</p>
+        </div>
+    </div>
+</body>
+</html>

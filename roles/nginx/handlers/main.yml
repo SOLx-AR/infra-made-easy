@@ -1,5 +1,5 @@
 ---
-# 🌐 NGINX HANDLERS
+# NGINX HANDLERS
 - name: restart nginx
   systemd:
     name: nginx

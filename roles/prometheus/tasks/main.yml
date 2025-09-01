@@ -1,6 +1,6 @@
 ---
-# 📊 ROLE PROMETHEUS - Sistema de monitoreo modular
-- name: "👤 Crear usuario prometheus"
+# ROLE PROMETHEUS - Sistema de monitoreo modular
+- name: "Crear usuario prometheus"
   user:
     name: prometheus
     system: yes
@@ -8,7 +8,7 @@
     home: "{{ prometheus.data_dir }}"
     create_home: no
 
-- name: "📁 Crear directorios de Prometheus"
+- name: "Crear directorios de Prometheus"
   file:
     path: "{{ item }}"
     state: directory
@@ -20,14 +20,14 @@
     - "{{ prometheus.data_dir }}"
     - "{{ prometheus.rules_dir }}"
 
-- name: "📦 Descargar Prometheus"
+- name: "Descargar Prometheus"
   unarchive:
     src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus.version }}/prometheus-{{ prometheus.version }}.linux-amd64.tar.gz"
     dest: /tmp
     remote_src: yes
     creates: "/tmp/prometheus-{{ prometheus.version }}.linux-amd64"
 
-- name: "📋 Copiar binarios de Prometheus"
+- name: "Copiar binarios de Prometheus"
   copy:
     src: "/tmp/prometheus-{{ prometheus.version }}.linux-amd64/{{ item }}"
     dest: "/usr/local/bin/{{ item }}"
@@ -40,7 +40,7 @@
     - promtool
   notify: restart prometheus
 
-- name: "⚙️ Configurar Prometheus"
+- name: "Configurar Prometheus"
   template:
     src: prometheus.yml.j2
     dest: "{{ prometheus.config_dir }}/prometheus.yml"
@@ -49,7 +49,7 @@
     mode: '0644'
   notify: restart prometheus
 
-- name: "🔧 Crear servicio systemd"
+- name: "Crear servicio systemd"
   template:
     src: prometheus.service.j2
     dest: /etc/systemd/system/prometheus.service
@@ -60,22 +60,22 @@
     - daemon reload
     - restart prometheus
 
-- name: "🚀 Iniciar y habilitar Prometheus"
+- name: "Iniciar y habilitar Prometheus"
   systemd:
     name: prometheus
     state: started
     enabled: yes
     daemon_reload: yes
 
-- name: "🔓 Abrir puerto de Prometheus"
+- name: "Abrir puerto de Prometheus"
   ufw:
     rule: allow
     port: "{{ prometheus.port }}"
 
-- name: "📊 Mostrar información de Prometheus"
+- name: "Mostrar información de Prometheus"
   debug:
     msg:
-      - "🎉 Prometheus configurado exitosamente"
-      - "📊 Web UI: http://{{ ansible_default_ipv4.address }}:{{ prometheus.port }}"
-      - "📁 Configuración: {{ prometheus.config_dir }}/prometheus.yml"
-      - "💾 Datos: {{ prometheus.data_dir }}"
+      - "Prometheus configurado exitosamente"
+      - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ prometheus.port }}"
+      - "Configuración: {{ prometheus.config_dir }}/prometheus.yml"
+      - "Datos: {{ prometheus.data_dir }}"

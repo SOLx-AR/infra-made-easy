@@ -1,18 +1,18 @@
 ---
-# 🔒 EQUIPO SEGURIDAD - Auditoría y hardening (Ultra Modular)
-- name: "🔒 ETAPA 2 - Configurar Auditoría de Seguridad"
+# EQUIPO SEGURIDAD - Auditoria y hardening (Ultra Modular)
+- name: "ETAPA 2 - Configurar Auditoria de Seguridad"
   hosts: security_servers
   become: yes
   
   pre_tasks:
-    - name: "📦 Actualizar paquetes del sistema"
+    - name: "Actualizar paquetes del sistema"
       apt:
         update_cache: yes
         upgrade: yes
         
   roles:
-    - common         # 🔧 Configuración base + usuarios
-    - lynis          # 🔍 Auditoría de seguridad
-    - fail2ban       # 🛡️ Protección contra ataques
-    - nginx          # 🌐 Servidor web para dashboard
-    - node-exporter  # 🖥️ Métricas para monitoreo
+    - common         # Configuracion base + usuarios
+    - lynis          # Auditoria de seguridad
+    - fail2ban       # Proteccion contra ataques
+    - nginx          # Servidor web para dashboard
+    - node-exporter  # Métricas para monitoreo

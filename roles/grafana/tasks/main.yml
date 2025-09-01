@@ -1,0 +1,136 @@
+---
+# ROLE GRAFANA - Dashboard y visualización de métricas
+- name: "Instalar dependencias de Grafana"
+  apt:
+    name:
+      - software-properties-common
+      - apt-transport-https
+      - wget
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: "Agregar clave GPG de Grafana"
+  apt_key:
+    url: "https://apt.grafana.com/gpg.key"
+    state: present
+
+- name: "Agregar repositorio de Grafana"
+  apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+    state: present
+    update_cache: yes
+
+- name: "Instalar Grafana"
+  apt:
+    name: grafana
+    state: present
+    update_cache: yes
+
+- name: "Crear usuario grafana"
+  user:
+    name: grafana
+    system: yes
+    shell: /bin/false
+    home: "{{ grafana.data_dir }}"
+    create_home: no
+
+- name: "Crear directorios de Grafana"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+  loop:
+    - "{{ grafana.config_dir }}"
+    - "{{ grafana.data_dir }}"
+    - "{{ grafana.logs_dir }}"
+    - "{{ grafana.plugins_dir }}"
+    - "{{ grafana.data_dir }}/dashboards"
+    - "{{ grafana.data_dir }}/provisioning"
+    - "{{ grafana.data_dir }}/provisioning/datasources"
+    - "{{ grafana.data_dir }}/provisioning/dashboards"
+
+- name: "Configurar Grafana"
+  template:
+    src: grafana.ini.j2
+    dest: "{{ grafana.config_dir }}/grafana.ini"
+    owner: grafana
+    group: grafana
+    mode: '0640'
+  notify: restart grafana
+
+- name: "Configurar datasources automáticamente"
+  template:
+    src: datasources.yml.j2
+    dest: "{{ grafana.data_dir }}/provisioning/datasources/datasources.yml"
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  notify: restart grafana
+
+- name: "Configurar dashboards automáticamente"
+  template:
+    src: dashboards.yml.j2
+    dest: "{{ grafana.data_dir }}/provisioning/dashboards/dashboards.yml"
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  notify: restart grafana
+
+- name: "Iniciar y habilitar Grafana"
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: "Abrir puerto de Grafana"
+  ufw:
+    rule: allow
+    port: "{{ grafana.port }}"
+
+- name: "Esperar a que Grafana esté disponible"
+  wait_for:
+    host: "{{ ansible_default_ipv4.address }}"
+    port: "{{ grafana.port }}"
+    delay: 10
+    timeout: 60
+
+- name: "Instalar plugins de Grafana"
+  shell: |
+    grafana-cli plugins install {{ item }}
+  loop: "{{ grafana.plugins }}"
+  notify: restart grafana
+  ignore_errors: yes
+
+- name: "Descargar dashboards predeterminados"
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ grafana.data_dir }}/dashboards/{{ item.name | replace(' ', '_') }}.json"
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  loop: "{{ grafana.dashboards }}"
+  ignore_errors: yes
+
+- name: "Crear dashboard personalizado de Infra Made Easy"
+  template:
+    src: infrastructure-dashboard.json.j2
+    dest: "{{ grafana.data_dir }}/dashboards/infra-made-easy-main.json"
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  notify: restart grafana
+
+- name: "Mostrar información de Grafana"
+  debug:
+    msg:
+      - "Grafana configurado exitosamente"
+      - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ grafana.port }}"
+      - "Usuario: {{ grafana.admin_user }}"
+      - "Contraseña: {{ grafana.admin_password }}"
+      - "Configuración: {{ grafana.config_dir }}/grafana.ini"
+      - "Datos: {{ grafana.data_dir }}"
+      - "IMPORTANTE: Cambiar la contraseña por defecto en producción"

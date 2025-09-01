@@ -1,17 +1,17 @@
 ---
-# ⚙️ EQUIPO TRAEFIK + ACME - Load balancer y ACME (Ultra Modular)
-- name: "⚙️ ETAPA 2 - Configurar Traefik Load Balancer"
+# EQUIPO TRAEFIK + ACME - Load balancer y ACME (Ultra Modular)
+- name: "ETAPA 2 - Configurar Traefik Load Balancer"
   hosts: traefik_servers
   become: yes
   
   pre_tasks:
-    - name: "📦 Actualizar paquetes del sistema"
+    - name: "Actualizar paquetes del sistema"
       apt:
         update_cache: yes
         upgrade: yes
         
   roles:
-    - common         # 🔧 Configuración base + usuarios
-    - docker         # 🐳 Docker para Traefik
-    - traefik        # 🔄 Load balancer y proxy
-    - node-exporter  # 🖥️ Métricas para monitoreo
+    - common         # Configuración base + usuarios
+    - docker         # Docker para Traefik
+    - traefik        # Load balancer y proxy
+    - node-exporter  # Métricas para monitoreo

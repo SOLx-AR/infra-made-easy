@@ -1,5 +1,5 @@
 ---
-# 🖥️ NODE-EXPORTER HANDLERS
+# NODE-EXPORTER HANDLERS
 - name: daemon reload
   systemd:
     daemon_reload: yes

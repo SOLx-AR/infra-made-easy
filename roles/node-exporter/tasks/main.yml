@@ -1,6 +1,6 @@
 ---
-# 🖥️ ROLE NODE-EXPORTER - Métricas del sistema para Prometheus
-- name: "👤 Crear usuario node-exporter"
+# ROLE NODE-EXPORTER - Métricas del sistema para Prometheus
+- name: "Crear usuario node-exporter"
   user:
     name: node_exporter
     system: yes
@@ -8,14 +8,14 @@
     home: /var/lib/node_exporter
     create_home: no
 
-- name: "📦 Descargar Node Exporter"
+- name: "Descargar Node Exporter"
   unarchive:
     src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter.version }}/node_exporter-{{ node_exporter.version }}.linux-amd64.tar.gz"
     dest: /tmp
     remote_src: yes
     creates: "/tmp/node_exporter-{{ node_exporter.version }}.linux-amd64"
 
-- name: "📋 Instalar binario de Node Exporter"
+- name: "Instalar binario de Node Exporter"
   copy:
     src: "/tmp/node_exporter-{{ node_exporter.version }}.linux-amd64/node_exporter"
     dest: "/usr/local/bin/node_exporter"
@@ -25,7 +25,7 @@
     remote_src: yes
   notify: restart node-exporter
 
-- name: "🔧 Crear servicio systemd"
+- name: "Crear servicio systemd"
   template:
     src: node-exporter.service.j2
     dest: /etc/systemd/system/node-exporter.service
@@ -36,14 +36,14 @@
     - daemon reload
     - restart node-exporter
 
-- name: "🚀 Iniciar y habilitar Node Exporter"
+- name: "Iniciar y habilitar Node Exporter"
   systemd:
     name: node-exporter
     state: started
     enabled: yes
     daemon_reload: yes
 
-- name: "🔓 Abrir puerto de Node Exporter"
+- name: "Abrir puerto de Node Exporter"
   ufw:
     rule: allow
     port: "{{ node_exporter.port }}"
@@ -51,9 +51,9 @@
   loop: "{{ node_exporter.allowed_ips }}"
   when: node_exporter.allowed_ips is defined
 
-- name: "📊 Mostrar información de Node Exporter"
+- name: "Mostrar información de Node Exporter"
   debug:
     msg:
-      - "🎉 Node Exporter configurado exitosamente"
-      - "📊 Métricas: http://{{ ansible_default_ipv4.address }}:{{ node_exporter.port }}/metrics"
-      - "🔧 Colectores habilitados: {{ node_exporter.collectors | join(', ') }}"
+      - "Node Exporter configurado exitosamente"
+      - "Métricas: http://{{ ansible_default_ipv4.address }}:{{ node_exporter.port }}/metrics"
+      - "Colectores habilitados: {{ node_exporter.collectors | join(', ') }}"

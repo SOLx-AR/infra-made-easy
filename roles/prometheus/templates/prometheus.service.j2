@@ -1,0 +1,36 @@
+[Unit]
+Description=Prometheus Server
+Documentation=https://prometheus.io/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/prometheus \
+  --config.file={{ prometheus.config_dir }}/prometheus.yml \
+  --storage.tsdb.path={{ prometheus.data_dir }} \
+  --storage.tsdb.retention.time={{ prometheus.retention_time | default('30d') }} \
+  --storage.tsdb.retention.size={{ prometheus.retention_size | default('10GB') }} \
+  --web.console.templates=/usr/local/share/prometheus/consoles \
+  --web.console.libraries=/usr/local/share/prometheus/console_libraries \
+  --web.listen-address=0.0.0.0:{{ prometheus.port | default(9090) }} \
+  --web.external-url=http://{{ ansible_default_ipv4.address }}:{{ prometheus.port | default(9090) }}/ \
+  --web.enable-lifecycle
+
+SyslogIdentifier=prometheus
+Restart=always
+RestartSec=5
+StartLimitInterval=0
+
+# Configuración de seguridad
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ prometheus.data_dir }}
+
+[Install]
+WantedBy=multi-user.target

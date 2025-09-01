@@ -1,72 +1,107 @@
 ---
-# 👥 GESTIÓN DE USUARIOS - Ultra modular basado en users.yml
-- name: "📋 Cargar configuración de usuarios"
+# GESTIÓN DE USUARIOS - Estructura simplificada
+- name: "Cargar configuración de usuarios"
   include_vars: "{{ playbook_dir }}/users.yml"
 
-- name: "👤 Crear usuarios según permisos para este servidor"
+- name: "Crear grupos docker si se necesita"
+  group:
+    name: docker
+    state: present
+  when: 
+    - users is defined
+    - users | map(attribute='groups') | flatten | select('equalto', 'docker') | list | length > 0
+
+- name: "Crear grupos personalizados si es necesario"
+  group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ custom_groups | unique }}"
+  vars:
+    # Grupos que definitivamente existen en sistemas Linux estándar
+    standard_groups:
+      - sudo
+      - adm
+      - root
+      - users
+      - staff
+    # Grupos que pueden no existir pero son comunes
+    optional_groups:
+      - docker
+      - www-data
+      - systemd-journal
+    all_groups: "{{ users | map(attribute='groups') | flatten | unique }}"
+    custom_groups: "{{ all_groups | difference(standard_groups) | difference(optional_groups) }}"
+  when: 
+    - users is defined
+    - custom_groups | length > 0
+
+- name: "Crear usuarios del sistema"
   user:
-    name: "{{ item.key }}"
-    comment: "{{ item.value.full_name }}"
-    groups: "{{ calculated_groups | join(',') }}"
+    name: "{{ item.user }}"
+    comment: "{{ item.email }}"
+    groups: "{{ item.groups | join(',') }}"
     shell: /bin/bash
     create_home: yes
     append: yes
-  loop: "{{ users | dict2items }}"
-  vars:
-    server_type: "{{ group_names[0] }}"
-    user_permissions: "{{ item.value.permissions[server_type] | default([]) }}"
-    calculated_groups: >-
-      {{
-        (['sudo'] if 'sudo' in user_permissions else []) +
-        (['docker'] if 'docker' in user_permissions else []) +
-        (['www-data'] if 'www-data' in user_permissions else []) +
-        (['jenkins'] if 'jenkins' in user_permissions else []) +
-        (['security'] if 'security_tools' in user_permissions else [])
-      }}
-  when: 
-    - item.value.permissions[server_type] is defined
-    - item.value.permissions[server_type] | length > 0
-
-- name: "🔑 Configurar claves SSH públicas"
-  authorized_key:
-    user: "{{ item.key }}"
-    key: "{{ item.value.ssh_public_key }}"
-    comment: "{{ item.value.email }} - {{ item.value.full_name }}"
     state: present
-  loop: "{{ users | dict2items }}"
-  vars:
-    server_type: "{{ group_names[0] }}"
-  when: 
-    - item.value.permissions[server_type] is defined
-    - item.value.permissions[server_type] | length > 0
+  loop: "{{ users }}"
+  when: users is defined
+
+- name: "Configurar claves SSH públicas"
+  authorized_key:
+    user: "{{ item.0.user }}"
+    key: "{{ item.1.key }}"
+    comment: "{{ item.1.name }} - {{ item.0.email }}"
+    state: present
+  loop: "{{ users | subelements('authorized_keys', skip_missing=True) }}"
+  when: users is defined
   ignore_errors: yes
 
-- name: "🔐 Configurar sudo sin contraseña para usuarios autorizados"
+- name: "Configurar sudo sin contraseña para usuarios sudo"
   lineinfile:
     path: /etc/sudoers.d/curso-infra-users
-    line: "{{ item.key }} ALL=(ALL) NOPASSWD:ALL"
+    line: "{{ item.user }} ALL=(ALL) NOPASSWD:ALL"
     create: yes
     mode: '0440'
     validate: 'visudo -cf %s'
-  loop: "{{ users | dict2items }}"
-  vars:
-    server_type: "{{ group_names[0] }}"
-    user_permissions: "{{ item.value.permissions[server_type] | default([]) }}"
+  loop: "{{ users }}"
   when: 
-    - item.value.permissions[server_type] is defined
-    - "'sudo' in user_permissions"
+    - users is defined
+    - "'sudo' in item.groups"
 
-- name: "📊 Mostrar resumen de usuarios configurados"
+- name: "Limpiar usuarios por defecto del sistema"
+  user:
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
+    groups: "{{ item.groups | join(',') if item.groups else omit }}"
+    state: "{{ item.state }}"
+    remove: "{{ true if item.state == 'absent' else false }}"
+  loop: "{{ cleanup_users }}"
+  when: cleanup_users is defined
+
+- name: "Limpiar claves SSH de usuarios por defecto"
+  authorized_key:
+    user: "{{ item.0.user }}"
+    key: "{{ item.1.key }}"
+    state: absent
+  loop: "{{ cleanup_users | subelements('authorized_keys', skip_missing=True) }}"
+  when: cleanup_users is defined
+  ignore_errors: yes
+
+- name: "Agregar usuarios al grupo docker (si existe)"
+  user:
+    name: "{{ item.user }}"
+    groups: docker
+    append: yes
+  loop: "{{ users }}"
+  when:
+    - users is defined
+    - "'docker' in item.groups"
+  ignore_errors: yes  # El grupo docker puede no existir hasta que se instale
+
+- name: "Mostrar resumen de usuarios configurados"
   debug:
     msg: 
-      - "👥 Usuarios configurados en {{ group_names[0] }}:"
-      - "{{ configured_users | join(', ') }}"
-  vars:
-    server_type: "{{ group_names[0] }}"
-    configured_users: >-
-      {{
-        users | dict2items 
-        | selectattr('value.permissions.' + server_type, 'defined')
-        | map(attribute='key') 
-        | list
-      }}
+      - "Usuarios configurados en {{ group_names[0] }}:"
+      - "{{ users | map(attribute='user') | list | join(', ') if users else 'Ninguno' }}"
+  when: users is defined

@@ -1,0 +1,27 @@
+# Configuración automática de Dashboards
+# Generado por Ansible - Role: grafana
+
+apiVersion: 1
+
+providers:
+  # Configuración para dashboards desde archivos locales
+  - name: 'default'
+    orgId: 1
+    folder: 'Infra Made Easy'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: {{ grafana.data_dir }}/dashboards
+
+  # Configuración para dashboards desde Grafana.com
+  - name: 'grafana-dashboards'
+    orgId: 1
+    folder: 'Community Dashboards'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 60
+    allowUiUpdates: true
+    options:
+      path: {{ grafana.data_dir }}/dashboards

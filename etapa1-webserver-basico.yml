@@ -1,15 +1,15 @@
 ---
-# 🎯 ETAPA 1 - Webserver Básico
+# ETAPA 1 - Webserver Básico
 # Playbook que TODOS los estudiantes deben ejecutar primero
 
-- name: "🎯 ETAPA 1 - Configurar Webserver Básico"
+- name: "ETAPA 1 - Configurar Webserver Básico"
   hosts: all
   become: yes
   vars:
     student_name: "{{ lookup('env', 'STUDENT_NAME') | default('estudiante') }}"
   
   pre_tasks:
-    - name: "📦 Actualizar paquetes del sistema"
+    - name: "Actualizar paquetes del sistema"
       apt:
         update_cache: yes
         upgrade: yes
@@ -18,25 +18,26 @@
     - common
     
   tasks:
-    - name: "🔧 Instalar Nginx"
+    - name: "Instalar Nginx"
       apt:
         name: nginx
         state: present
         
-    - name: "🚀 Iniciar y habilitar Nginx"
+    - name: "Iniciar y habilitar Nginx"
       systemd:
         name: nginx
         state: started
         enabled: yes
         
-    - name: "🔥 Crear página web personalizada"
+    - name: "Crear página web personalizada"
       template:
-        src: ansible/roles/common/templates/etapa1-index.html.j2
+        src: etapa1-index.html.j2
         dest: /var/www/html/index.html
         owner: www-data
         group: www-data
+        mode: '0644'
         
-    - name: "🔓 Permitir tráfico web en firewall"
+    - name: "Permitir tráfico web en firewall"
       ufw:
         rule: allow
         port: "{{ item }}"
@@ -44,11 +45,11 @@
         - "80"   # HTTP
         - "443"  # HTTPS
         
-    - name: "🎯 Mostrar información de éxito"
+    - name: "Mostrar información de éxito"
       debug:
         msg:
-          - "🎉 ¡ETAPA 1 COMPLETADA EXITOSAMENTE!"
-          - "👤 Estudiante: {{ student_name }}"
-          - "🌐 Tu servidor está disponible en: http://{{ ansible_default_ipv4.address }}"
-          - "🚀 Siguiente paso: Elige un equipo para la Etapa 2"
-          - "📆 Lee la documentación en docs/ETAPA2.md"
+          - "¡ETAPA 1 COMPLETADA EXITOSAMENTE!"
+          - "Estudiante: {{ student_name }}"
+          - "Tu servidor está disponible en: http://{{ ansible_default_ipv4.address }}"
+          - "Siguiente paso: Elige un equipo para la Etapa 2"
+          - "Lee la documentación en docs/ETAPA2.md"
