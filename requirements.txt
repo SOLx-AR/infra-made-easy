@@ -1,4 +1,4 @@
-# 🐍 Dependencias Python para Curso "Infra Made Easy"
+# Dependencias Python para Curso "Infra Made Easy"
 # Herramientas necesarias para gestión de infraestructura - Compatible con Python 3.13
 
 # Ansible - Herramienta principal de automatización
