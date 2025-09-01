@@ -1,0 +1,8 @@
+---
+# GitHub Actions Runner - Default variables
+github_runner_version: "2.311.0"
+github_repo: "your-org/your-repo"
+github_token: "{{ vault_github_token | default('') }}"
+github_runner_user: "github-runner"
+github_runner_workdir: "/home/github-runner/actions-runner"
+github_runner_labels: ["cicd", "linux"]
