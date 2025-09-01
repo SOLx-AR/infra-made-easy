@@ -1,0 +1,137 @@
+---
+# ROLE LETSENCRYPT - Certificados SSL gratuitos
+- name: "📦 Instalar dependencias para Let's Encrypt"
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+      - cron
+    state: present
+    update_cache: yes
+
+- name: "📁 Crear directorios de Let's Encrypt"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ letsencrypt.config_dir }}"
+    - "{{ letsencrypt.work_dir }}"
+    - "{{ letsencrypt.logs_dir }}"
+    - "{{ letsencrypt.webroot_path }}/.well-known/acme-challenge"
+
+- name: "🌐 Verificar que el dominio esté definido"
+  fail:
+    msg: "Variable 'domain' debe estar definida para el host {{ inventory_hostname }}"
+  when: domain is not defined
+
+- name: "⚡ Crear configuración temporal de nginx para ACME challenge"
+  template:
+    src: nginx-acme-temp.conf.j2
+    dest: "/etc/nginx/sites-available/{{ domain }}-acme-temp"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "🔗 Habilitar configuración temporal de nginx"
+  file:
+    src: "/etc/nginx/sites-available/{{ domain }}-acme-temp"
+    dest: "/etc/nginx/sites-enabled/{{ domain }}-acme-temp"
+    state: link
+  notify: reload nginx
+
+- name: "🔄 Recargar nginx para configuración temporal"
+  systemd:
+    name: nginx
+    state: reloaded
+
+- name: "🔐 Generar certificado SSL con Let's Encrypt"
+  command: >
+    certbot certonly
+    --webroot
+    --webroot-path {{ letsencrypt.webroot_path }}
+    --email {{ letsencrypt.email }}
+    --agree-tos
+    --no-eff-email
+    {% if letsencrypt.staging %}--staging{% endif %}
+    --domains {{ domain }}
+    --non-interactive
+    --expand
+  args:
+    creates: "{{ letsencrypt.config_dir }}/live/{{ domain }}/fullchain.pem"
+  register: letsencrypt_cert
+
+- name: "📋 Mostrar resultado de certificado"
+  debug:
+    msg: 
+      - "Certificado SSL generado para: {{ domain }}"
+      - "Estado: {{ 'EXITOSO' if letsencrypt_cert.rc == 0 else 'ERROR' }}"
+  when: letsencrypt_cert is defined
+
+- name: "🗑️ Eliminar configuración temporal"
+  file:
+    path: "/etc/nginx/sites-enabled/{{ domain }}-acme-temp"
+    state: absent
+  notify: reload nginx
+
+- name: "🔧 Crear configuración SSL de nginx"
+  template:
+    src: nginx-ssl.conf.j2
+    dest: "/etc/nginx/sites-available/{{ domain }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload nginx
+
+- name: "🔗 Habilitar sitio SSL"
+  file:
+    src: "/etc/nginx/sites-available/{{ domain }}"
+    dest: "/etc/nginx/sites-enabled/{{ domain }}"
+    state: link
+  notify: reload nginx
+
+- name: "🔐 Configurar DH parameters para mayor seguridad"
+  command: openssl dhparam -out /etc/nginx/dhparam.pem 2048
+  args:
+    creates: /etc/nginx/dhparam.pem
+
+- name: "⏰ Configurar renovación automática de certificados"
+  cron:
+    name: "Renovar certificados Let's Encrypt"
+    minute: "{{ letsencrypt.renew_cron_minute }}"
+    hour: "{{ letsencrypt.renew_cron_hour }}"
+    job: "/usr/bin/certbot renew --quiet && /usr/bin/systemctl reload nginx"
+    user: root
+  when: letsencrypt.auto_renew
+
+- name: "🔍 Verificar estado del certificado"
+  command: "certbot certificates --domain {{ domain }}"
+  register: cert_status
+  changed_when: false
+  ignore_errors: yes
+
+- name: "🚀 Mostrar información del SSL"
+  debug:
+    msg:
+      - "✅ Servidor web SSL configurado exitosamente"
+      - ""
+      - "🌐 Dominio: {{ domain }}"
+      - "🔐 Certificado SSL: ACTIVO"
+      - "📅 Renovación automática: {{ 'HABILITADA' if letsencrypt.auto_renew else 'DESHABILITADA' }}"
+      - ""
+      - "🔗 URLs de acceso:"
+      - "   HTTP:  http://{{ domain }} (redirige a HTTPS)"
+      - "   HTTPS: https://{{ domain }}"
+      - ""
+      - "🛡️ Características de seguridad:"
+      - "   - Protocolos: {{ letsencrypt.ssl_protocols }}"
+      - "   - HSTS habilitado"
+      - "   - Headers de seguridad configurados"
+      - "   - DH Parameters 2048-bit"
+      - ""
+      - "🔧 Comandos útiles:"
+      - "   Verificar SSL: certbot certificates"
+      - "   Renovar manual: certbot renew"
+      - "   Test SSL: curl -I https://{{ domain }}"

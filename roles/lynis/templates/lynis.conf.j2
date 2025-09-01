@@ -1,0 +1,83 @@
+# Configuración de Lynis
+# Generado por Ansible - Role: lynis
+# Para el curso "Infra Made Easy"
+
+# Configuración general
+config:version=1
+
+# Logging
+log:level={{ lynis.logs_dir }}/debug
+log:colored-output=true
+log:report-warnings=true
+
+# Reportes
+{% if 'json' in lynis.reports.format %}
+report:output-format=json
+report:json={{ lynis.reports_dir }}/lynis-$(date +%Y%m%d-%H%M%S).json
+{% endif %}
+
+{% if 'text' in lynis.reports.format %}
+report:output-format=text
+report:file={{ lynis.reports_dir }}/lynis-$(date +%Y%m%d-%H%M%S).txt
+{% endif %}
+
+# Compresión de reportes
+{% if lynis.reports.compress %}
+report:compress=true
+{% endif %}
+
+# Configuración de tests
+{% for category in lynis.test_categories %}
+test:{{ category }}=enabled
+{% endfor %}
+
+# Skip tests que pueden ser problemáticos en VPS/Cloud
+skip-test=AUTH-9229    # Password aging (puede variar por política)
+skip-test=FIRE-4513    # iptables module check (puede usar ufw)
+skip-test=SSH-7408     # SSH client configuration (puede no existir)
+
+# Configuración específica para servidores web
+webserver:nginx:enabled=true
+webserver:nginx:config-dir=/etc/nginx
+webserver:nginx:log-dir=/var/log/nginx
+
+# Configuración de red
+network:test-ports=true
+network:allow-icmp-redirects=false
+
+# Configuración de archivos
+files:test-hidden-files=true
+files:scan-tmp-directory=true
+
+# Configuración del sistema
+system:check-cron=true
+system:check-systemd=true
+
+# Hardening automático (deshabilitado por defecto)
+{% if lynis.auto_hardening.enabled %}
+hardening:auto=true
+{% for category in lynis.auto_hardening.categories %}
+hardening:{{ category }}=enabled
+{% endfor %}
+{% else %}
+hardening:auto=false
+{% endif %}
+
+# Configuración de plugins
+{% for plugin in lynis.plugins %}
+plugin:{{ plugin }}=enabled
+{% endfor %}
+
+# Configuración específica para entorno de curso
+environment:type=course
+environment:name=infra-made-easy
+environment:skip-online-tests=true
+
+# Configuración de compliance
+compliance:enabled=true
+compliance:standards=pci-dss,iso27001
+
+# Configuración de logging avanzado
+advanced:logging=true
+advanced:colors=true
+advanced:show-tool-tips=true

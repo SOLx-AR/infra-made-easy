@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""
+Security Metrics Exporter para Prometheus
+Exporta métricas de Lynis y otras herramientas de seguridad
+Generado por Ansible - Role: lynis
+"""
+
+import json
+import re
+import os
+import time
+from prometheus_client import start_http_server, Gauge, Info, Counter
+from datetime import datetime
+import subprocess
+
+# Métricas
+security_score = Gauge('lynis_security_score', 'Lynis security hardening score (0-100)')
+security_warnings = Gauge('lynis_warnings_total', 'Total number of Lynis warnings')
+security_suggestions = Gauge('lynis_suggestions_total', 'Total number of Lynis suggestions')
+security_tests_performed = Gauge('lynis_tests_performed_total', 'Total number of tests performed')
+security_tests_skipped = Gauge('lynis_tests_skipped_total', 'Total number of tests skipped')
+security_last_scan = Gauge('lynis_last_scan_timestamp', 'Timestamp of last security scan')
+
+# Información del sistema
+system_info = Info('lynis_system_info', 'System information from Lynis')
+lynis_info = Info('lynis_version_info', 'Lynis version information')
+
+# Contadores
+scans_total = Counter('lynis_scans_total', 'Total number of security scans performed')
+
+# Configuración
+REPORTS_DIR = "{{ lynis.reports_dir }}"
+LOGS_DIR = "{{ lynis.logs_dir }}"
+METRICS_PORT = {{ lynis.web_dashboard.port }}
+
+def get_latest_report():
+    """Encuentra el reporte más reciente de Lynis"""
+    try:
+        json_files = [f for f in os.listdir(REPORTS_DIR) if f.endswith('.json') and 'lynis' in f]
+        if not json_files:
+            return None
+        
+        latest = max(json_files, key=lambda f: os.path.getmtime(os.path.join(REPORTS_DIR, f)))
+        return os.path.join(REPORTS_DIR, latest)
+    except Exception as e:
+        print(f"Error finding latest report: {e}")
+        return None
+
+def get_latest_dat_report():
+    """Encuentra el reporte .dat más reciente de Lynis"""
+    try:
+        dat_files = [f for f in os.listdir(REPORTS_DIR) if f.endswith('.dat') and 'lynis' in f]
+        if not dat_files:
+            return None
+        
+        latest = max(dat_files, key=lambda f: os.path.getmtime(os.path.join(REPORTS_DIR, f)))
+        return os.path.join(REPORTS_DIR, latest)
+    except Exception as e:
+        print(f"Error finding latest .dat report: {e}")
+        return None
+
+def parse_dat_report(report_path):
+    """Parse del archivo .dat de Lynis"""
+    metrics = {
+        'hardening_index': 0,
+        'tests_performed': 0,
+        'tests_skipped': 0,
+        'warnings': 0,
+        'suggestions': 0
+    }
+    
+    try:
+        with open(report_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    
+                    if key == 'hardening_index':
+                        metrics['hardening_index'] = int(value) if value.isdigit() else 0
+                    elif key == 'tests_performed':
+                        metrics['tests_performed'] = int(value) if value.isdigit() else 0
+                    elif key == 'tests_skipped':
+                        metrics['tests_skipped'] = int(value) if value.isdigit() else 0
+                    elif key.startswith('warning['):
+                        metrics['warnings'] += 1
+                    elif key.startswith('suggestion['):
+                        metrics['suggestions'] += 1
+        
+        return metrics
+    except Exception as e:
+        print(f"Error parsing .dat report {report_path}: {e}")
+        return metrics
+
+def get_system_info():
+    """Obtiene información del sistema"""
+    info = {}
+    try:
+        # OS Info
+        with open('/etc/os-release', 'r') as f:
+            for line in f:
+                if '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    value = value.strip('"')
+                    if key in ['NAME', 'VERSION', 'ID', 'VERSION_ID']:
+                        info[f'os_{key.lower()}'] = value
+        
+        # Hostname
+        info['hostname'] = subprocess.check_output(['hostname'], text=True).strip()
+        
+        # Uptime
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.read().split()[0])
+            info['uptime_days'] = str(int(uptime_seconds / 86400))
+        
+        # Kernel
+        info['kernel'] = subprocess.check_output(['uname', '-r'], text=True).strip()
+        
+    except Exception as e:
+        print(f"Error getting system info: {e}")
+    
+    return info
+
+def get_lynis_version():
+    """Obtiene la versión de Lynis"""
+    try:
+        output = subprocess.check_output(['lynis', '--version'], text=True)
+        version_match = re.search(r'(\d+\.\d+\.\d+)', output)
+        if version_match:
+            return {'version': version_match.group(1)}
+    except Exception as e:
+        print(f"Error getting Lynis version: {e}")
+    
+    return {'version': 'unknown'}
+
+def update_metrics():
+    """Actualiza todas las métricas"""
+    print(f"[{datetime.now()}] Updating security metrics...")
+    
+    # Buscar el reporte más reciente
+    dat_report = get_latest_dat_report()
+    
+    if dat_report:
+        print(f"Found report: {dat_report}")
+        metrics = parse_dat_report(dat_report)
+        
+        # Actualizar métricas de Prometheus
+        security_score.set(metrics['hardening_index'])
+        security_warnings.set(metrics['warnings'])
+        security_suggestions.set(metrics['suggestions'])
+        security_tests_performed.set(metrics['tests_performed'])
+        security_tests_skipped.set(metrics['tests_skipped'])
+        
+        # Timestamp del último scan
+        file_mtime = os.path.getmtime(dat_report)
+        security_last_scan.set(file_mtime)
+        
+        print(f"Security score: {metrics['hardening_index']}/100")
+        print(f"Warnings: {metrics['warnings']}, Suggestions: {metrics['suggestions']}")
+        
+    else:
+        print("No Lynis reports found")
+        security_score.set(0)
+    
+    # Actualizar información del sistema
+    sys_info = get_system_info()
+    system_info.info(sys_info)
+    
+    # Actualizar información de Lynis
+    lynis_version = get_lynis_version()
+    lynis_info.info(lynis_version)
+    
+    scans_total.inc()
+
+def main():
+    """Función principal"""
+    print(f"Starting Security Metrics Exporter on port {METRICS_PORT}")
+    print(f"Reports directory: {REPORTS_DIR}")
+    print(f"Logs directory: {LOGS_DIR}")
+    
+    # Iniciar servidor HTTP de métricas
+    start_http_server(METRICS_PORT)
+    
+    # Actualización inicial
+    update_metrics()
+    
+    # Loop principal - actualizar cada 5 minutos
+    while True:
+        time.sleep(300)  # 5 minutos
+        try:
+            update_metrics()
+        except Exception as e:
+            print(f"Error updating metrics: {e}")
+
+if __name__ == '__main__':
+    main()

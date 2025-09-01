@@ -1,0 +1,88 @@
+---
+# LYNIS - Configuración por defecto
+lynis:
+  # Versión y configuración básica
+  version: "3.0.8"
+  install_method: "package"  # package, download, git
+  
+  # Directorios
+  config_dir: "/etc/lynis"
+  data_dir: "/var/lib/lynis"
+  logs_dir: "/var/log/lynis"
+  reports_dir: "/var/log/lynis/reports"
+  
+  # Configuración de auditoría
+  audit_mode: "system"  # system, docker, custom
+  
+  # Tests a ejecutar
+  test_categories:
+    - "authentication"
+    - "authorization" 
+    - "networking"
+    - "storage"
+    - "filesystems"
+    - "memory_processes"
+    - "shells"
+    - "logging"
+    - "webservers"
+    - "ssh"
+    - "time"
+    - "accounting"
+    - "banners"
+    - "boot_services"
+    - "crypto"
+    - "file_integrity"
+    - "firewalls"
+    - "hardening"
+    - "kernel"
+    - "malware"
+    - "ports_packages"
+    - "printers_spools"
+    - "scheduling"
+    - "squid"
+    - "tooling"
+    - "usb"
+    - "virtualization"
+    
+  # Configuración de reportes
+  reports:
+    format: "json,text"  # json, text, csv
+    compress: true
+    upload: false
+    email_report: false
+    
+  # Configuración de scoring
+  scoring:
+    minimum_score: 70
+    warning_threshold: 80
+    
+  # Hardening automático (cuidado en producción)
+  auto_hardening:
+    enabled: false
+    categories: []
+    
+  # Configuración web dashboard
+  web_dashboard:
+    enabled: true
+    port: 9114
+    auth_required: false  # Cambiar a true en producción
+    
+  # Scheduling de auditorías
+  schedule:
+    enabled: true
+    cron_minute: "0"
+    cron_hour: "3"
+    cron_day: "*"
+    daily_quick: true
+    weekly_full: true
+    
+  # Configuración de alertas
+  alerts:
+    enabled: true
+    score_threshold: 60
+    new_warnings: true
+    
+  # Plugins adicionales
+  plugins:
+    - "compliance"
+    - "forensics"

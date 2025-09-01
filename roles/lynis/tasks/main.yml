@@ -1,0 +1,199 @@
+---
+# ROLE LYNIS - Auditoría de seguridad del sistema
+- name: "📦 Instalar dependencias para Lynis"
+  apt:
+    name:
+      - curl
+      - wget
+      - gnupg
+      - software-properties-common
+      - jq
+      - python3-pip
+      - cron
+    state: present
+    update_cache: yes
+
+- name: "🔑 Agregar clave GPG de CISOfy (Lynis)"
+  apt_key:
+    url: "https://packages.cisofy.com/keys/cisofy-software-public.key"
+    state: present
+
+- name: "📂 Agregar repositorio de Lynis"
+  apt_repository:
+    repo: "deb https://packages.cisofy.com/community/lynis/deb/ stable main"
+    state: present
+    update_cache: yes
+
+- name: "📥 Instalar Lynis"
+  apt:
+    name: lynis
+    state: present
+    update_cache: yes
+
+- name: "📁 Crear directorios de Lynis"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+  loop:
+    - "{{ lynis.config_dir }}"
+    - "{{ lynis.data_dir }}"
+    - "{{ lynis.logs_dir }}"
+    - "{{ lynis.reports_dir }}"
+    - "{{ lynis.data_dir }}/custom"
+    - "/var/www/html/lynis-dashboard"
+
+- name: "⚙️ Configurar Lynis"
+  template:
+    src: lynis.conf.j2
+    dest: "{{ lynis.config_dir }}/lynis.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "🔧 Crear perfil personalizado de auditoría"
+  template:
+    src: custom-profile.prf.j2
+    dest: "{{ lynis.data_dir }}/custom/infra-made-easy.prf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "🏃 Ejecutar auditoría inicial de Lynis"
+  command: >
+    lynis audit system
+    --profile {{ lynis.data_dir }}/custom/infra-made-easy.prf
+    --log-file {{ lynis.logs_dir }}/lynis-initial.log
+    --report-file {{ lynis.reports_dir }}/lynis-initial.dat
+  register: lynis_initial_audit
+  changed_when: false
+  ignore_errors: yes
+
+- name: "📊 Generar reporte JSON inicial"
+  shell: |
+    lynis show report --format json > {{ lynis.reports_dir }}/lynis-initial.json
+  ignore_errors: yes
+
+- name: "🌐 Crear dashboard web simple para reportes"
+  template:
+    src: lynis-dashboard.html.j2
+    dest: "/var/www/html/lynis-dashboard/index.html"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: "📊 Crear script de métricas para Prometheus"
+  template:
+    src: lynis-metrics.sh.j2
+    dest: "{{ lynis.data_dir }}/lynis-metrics.sh"
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "🔍 Instalar simple exporter para métricas"
+  pip:
+    name: prometheus_client
+    state: present
+
+- name: "📈 Crear exporter de métricas de seguridad"
+  template:
+    src: security-exporter.py.j2
+    dest: "{{ lynis.data_dir }}/security-exporter.py"
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "🔧 Crear servicio systemd para security exporter"
+  template:
+    src: security-exporter.service.j2
+    dest: "/etc/systemd/system/security-exporter.service"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - daemon reload
+    - restart security-exporter
+
+- name: "🚀 Iniciar y habilitar security exporter"
+  systemd:
+    name: security-exporter
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: "⏰ Configurar auditorías programadas"
+  cron:
+    name: "Auditoría rápida diaria con Lynis"
+    minute: "{{ lynis.schedule.cron_minute }}"
+    hour: "{{ lynis.schedule.cron_hour }}"
+    day: "{{ lynis.schedule.cron_day }}"
+    job: "/usr/bin/lynis audit system --quick --quiet --log-file {{ lynis.logs_dir }}/lynis-daily-$(date +\\%Y\\%m\\%d).log"
+    user: root
+  when: lynis.schedule.enabled and lynis.schedule.daily_quick
+
+- name: "📅 Configurar auditoría completa semanal"
+  cron:
+    name: "Auditoría completa semanal con Lynis"
+    minute: "0"
+    hour: "2"
+    weekday: "0"
+    job: "/usr/bin/lynis audit system --profile {{ lynis.data_dir }}/custom/infra-made-easy.prf --log-file {{ lynis.logs_dir }}/lynis-weekly-$(date +\\%Y\\%m\\%d).log && {{ lynis.data_dir }}/lynis-metrics.sh"
+    user: root
+  when: lynis.schedule.enabled and lynis.schedule.weekly_full
+
+- name: "🔥 Abrir puerto para métricas"
+  ufw:
+    rule: allow
+    port: "{{ lynis.web_dashboard.port }}"
+  when: lynis.web_dashboard.enabled
+
+- name: "📋 Obtener score de seguridad actual"
+  shell: |
+    if [ -f "{{ lynis.reports_dir }}/lynis-initial.dat" ]; then
+      grep "hardening_index" {{ lynis.reports_dir }}/lynis-initial.dat | tail -1 | cut -d'=' -f2 || echo "0"
+    else
+      echo "0"
+    fi
+  register: current_security_score
+  changed_when: false
+
+- name: "🛡️ Crear script de hardening básico"
+  template:
+    src: basic-hardening.sh.j2
+    dest: "{{ lynis.data_dir }}/basic-hardening.sh"
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: "🚀 Mostrar información de Lynis"
+  debug:
+    msg:
+      - "✅ Lynis Security Audit configurado exitosamente"
+      - ""
+      - "🔍 AUDITORÍA DE SEGURIDAD:"
+      - "   Score actual: {{ current_security_score.stdout | default('N/A') }}/100"
+      - "   Score mínimo: {{ lynis.scoring.minimum_score }}/100"
+      - "   Umbral warning: {{ lynis.scoring.warning_threshold }}/100"
+      - ""
+      - "📊 DASHBOARDS Y REPORTES:"
+      - "   Dashboard: http://{{ ansible_default_ipv4.address }}/lynis-dashboard/"
+      - "   Métricas: http://{{ ansible_default_ipv4.address }}:{{ lynis.web_dashboard.port }}/metrics"
+      - "   Reportes: {{ lynis.reports_dir }}/"
+      - ""
+      - "⏰ PROGRAMACIÓN:"
+      - "   Auditoría diaria: {{ 'HABILITADA' if lynis.schedule.daily_quick else 'DESHABILITADA' }} ({{ lynis.schedule.cron_hour }}:{{ lynis.schedule.cron_minute }})"
+      - "   Auditoría semanal: {{ 'HABILITADA' if lynis.schedule.weekly_full else 'DESHABILITADA' }} (Domingos 02:00)"
+      - ""
+      - "🔧 COMANDOS ÚTILES:"
+      - "   Auditoría manual: lynis audit system"
+      - "   Auditoría rápida: lynis audit system --quick"
+      - "   Ver reporte: lynis show report"
+      - "   Actualizar Lynis: lynis update info"
+      - "   Hardening básico: {{ lynis.data_dir }}/basic-hardening.sh"
+      - ""
+      - "⚠️ IMPORTANTE:"
+      - "   - Revisar reportes regularmente"
+      - "   - Implementar recomendaciones gradualmente"
+      - "   - Probar hardening en ambiente de desarrollo primero"

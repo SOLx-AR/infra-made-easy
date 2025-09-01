@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Security Dashboard - {{ ansible_hostname }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.8;
+        }
+        .content {
+            padding: 30px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            text-align: center;
+        }
+        .metric-card.warning {
+            border-left-color: #f39c12;
+        }
+        .metric-card.danger {
+            border-left-color: #e74c3c;
+        }
+        .metric-card.success {
+            border-left-color: #27ae60;
+        }
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .link-card {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #2c3e50;
+            transition: transform 0.2s;
+        }
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .link-card h3 {
+            margin: 0 0 10px 0;
+            color: #3498db;
+        }
+        .commands {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .commands h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        .command {
+            background: #34495e;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #ecf0f1;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-ok { background: #27ae60; color: white; }
+        .status-warning { background: #f39c12; color: white; }
+        .status-error { background: #e74c3c; color: white; }
+    </style>
+    <script>
+        // Auto-refresh cada 5 minutos
+        setTimeout(function(){
+            location.reload();
+        }, 300000);
+        
+        // Cargar métricas dinámicamente
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/metrics');
+                const text = await response.text();
+                // Parse básico de métricas de Prometheus
+                const lines = text.split('\n');
+                const metrics = {};
+                
+                lines.forEach(line => {
+                    if (line.startsWith('lynis_security_score')) {
+                        const score = line.split(' ')[1];
+                        document.getElementById('security-score').textContent = score || 'N/A';
+                    }
+                    if (line.startsWith('lynis_warnings_total')) {
+                        const warnings = line.split(' ')[1];
+                        document.getElementById('warnings-count').textContent = warnings || '0';
+                    }
+                });
+            } catch (error) {
+                console.log('No se pudieron cargar métricas dinámicas');
+            }
+        }
+        
+        // Cargar métricas al cargar la página
+        window.onload = loadMetrics;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Security Dashboard</h1>
+            <p>Servidor: {{ ansible_hostname }} | IP: {{ ansible_default_ipv4.address }} | Última actualización: <span id="last-update">{{ ansible_date_time.iso8601 }}</span></p>
+        </div>
+        
+        <div class="content">
+            <div class="metrics-grid">
+                <div class="metric-card success">
+                    <div class="metric-label">Security Score</div>
+                    <div class="metric-value" id="security-score">--</div>
+                    <small>Hardening Index (0-100)</small>
+                </div>
+                
+                <div class="metric-card warning">
+                    <div class="metric-label">Warnings</div>
+                    <div class="metric-value" id="warnings-count">--</div>
+                    <small>Issues encontrados</small>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Último Scan</div>
+                    <div class="metric-value" style="font-size: 1.2em;">📅</div>
+                    <small id="last-scan">Verificar logs</small>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Servicios</div>
+                    <div class="metric-value" style="font-size: 1.5em;">
+                        🔍 Lynis<span class="status-badge status-ok">OK</span><br>
+                        🚫 fail2ban<span class="status-badge status-ok">OK</span><br>
+                        📊 Metrics<span class="status-badge status-ok">OK</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h2>🔗 Enlaces Rápidos</h2>
+            <div class="links-grid">
+                <a href="http://{{ ansible_default_ipv4.address }}:{{ lynis.web_dashboard.port }}/metrics" class="link-card">
+                    <h3>📊 Métricas Raw</h3>
+                    <p>Métricas de Prometheus para monitoreo</p>
+                </a>
+                
+                <a href="http://{{ ansible_default_ipv4.address }}:9100/metrics" class="link-card">
+                    <h3>🖥️ Sistema</h3>
+                    <p>Métricas del sistema (Node Exporter)</p>
+                </a>
+                
+                <a href="/lynis-dashboard/reports/" class="link-card">
+                    <h3>📋 Reportes</h3>
+                    <p>Reportes detallados de auditoría</p>
+                </a>
+                
+                <a href="https://cisofy.com/lynis/documentation/" class="link-card" target="_blank">
+                    <h3>📚 Documentación</h3>
+                    <p>Guías y documentación de Lynis</p>
+                </a>
+            </div>
+            
+            <div class="commands">
+                <h3>🔧 Comandos Útiles</h3>
+                
+                <div class="command">
+                    # Ejecutar auditoría completa<br>
+                    sudo lynis audit system
+                </div>
+                
+                <div class="command">
+                    # Auditoría rápida<br>
+                    sudo lynis audit system --quick
+                </div>
+                
+                <div class="command">
+                    # Ver último reporte<br>
+                    sudo lynis show report
+                </div>
+                
+                <div class="command">
+                    # Status de fail2ban<br>
+                    sudo fail2ban-client status
+                </div>
+                
+                <div class="command">
+                    # Verificar firewall<br>
+                    sudo ufw status verbose
+                </div>
+                
+                <div class="command">
+                    # Ejecutar hardening básico (¡CUIDADO!)<br>
+                    sudo {{ lynis.data_dir }}/basic-hardening.sh
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🚀 Infra Made Easy - Security Audit Dashboard | Servidor: {{ server_name | default(ansible_hostname) }}</p>
+            <p><small>Auto-refresh cada 5 minutos | Curso de Infraestructura Colaborativa</small></p>
+        </div>
+    </div>
+</body>
+</html>
