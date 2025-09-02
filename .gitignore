@@ -133,3 +133,4 @@ Icon
 # Linux
 *~
 .nfs*
+venv-ansible

@@ -11,6 +11,16 @@ admin_users:
     authorized_keys:
       - name: nico
         key: "{{ lookup('file', 'users/nico/id_rsa.pub') }}"
+
+
+  - user: avd
+    email: 39-source.heifer@icloud.com
+    groups:
+      - sudo
+      - adm
+    authorized_keys:
+      - name: avd
+        key: "{{ lookup('file', 'users/avd/id_rsa.pub') }}"
         
 
 # Usuarios adicionales por servidor/equipo (se pueden agregar dinámicamente)

@@ -7,13 +7,13 @@
 
 # SERVIDORES DE MONITOREO
 [monitoring_servers]
-server-f0x17 ansible_host=34.122.207.0 server_name=prometheus-grafana-99 ansible_user=fox
+#server-f0x17 ansible_host=34.122.207.0 server_name=prometheus-grafana-99 ansible_user=fox
 #monitoring1 ansible_host=127.0.0.1 server_name=prometheus-grafana-1
 #monitoring2 ansible_host=127.0.0.1 server_name=prometheus-grafana-2
 
 # SERVIDORES WEB + SSL
 [webserver_ssl_servers]
-#server-f0x17 ansible_host=34.122.207.0 server_name=nginx-ssl-1 domain=web1.curso-infra.com ansible_user=fox
+web-alejandro ansible_host=ec2-18-222-191-219.us-east-2.compute.amazonaws.com server_name=nginx-ssl-1 domain=web1.solx.fun
 #webssl1 ansible_host=127.0.0.1 server_name=nginx-ssl-1 domain=web1.curso-infra.com
 #webssl2 ansible_host=127.0.0.1 server_name=nginx-ssl-2 domain=web2.curso-infra.com
 #webssl3 ansible_host=127.0.0.1 server_name=nginx-ssl-3 domain=web3.curso-infra.com
