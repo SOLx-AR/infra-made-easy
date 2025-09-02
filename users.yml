@@ -12,17 +12,27 @@ admin_users:
       - name: nico
         key: "{{ lookup('file', 'users/nico/id_rsa.pub') }}"
         
+security_admins:
+  - user: andreatarsi
+    email: tarsiandrea95@gmail.com
+    groups:
+      - sudo      
+      - adm
+    authorized_keys:
+      - name: andreatarsi
+        key: "{{ lookup('file', 'users/andreatarsi/id_rsa.pub') }}"  
+
 
 # Usuarios adicionales por servidor/equipo (se pueden agregar dinámicamente)
 additional_users: []
 
 # Lista final de usuarios
-users: "{{ admin_users + additional_users }}"
+users: "{{ admin_users + security_admins + additional_users }}"
 
 # Usuarios para administración específica (usado por diferentes roles)
 monitoring_admins: "{{ admin_users }}"
 webserver_admins: "{{ admin_users }}"
-security_admins: "{{ admin_users }}"
+security_admins: "{{ security_users }}"
 cicd_admins: "{{ admin_users }}"
 traefik_admins: "{{ admin_users }}"
 
